@@ -1,0 +1,39 @@
+peptide a = <TVAGGGHLYSCVVHYK>;
+
+molecule malemide = (C4H2NO2); 
+
+solvent water; 
+
+solvent dmso; 
+
+solution peptideinwater = a(0.1 mM) in water;
+
+solution malemideindmso = b(0.1 mM) in dmso; 
+
+calculate_average_mass <NICKISEPIC>; 
+
+generate_smiles <NICKISEPIC> 
+
+protocol conjugate  p m {
+    dispense p; 
+    dispense m;
+    x = find location;
+    combine p and m at x;
+    agitate x for 300 minutes    
+} 
+
+
+protocol combine p m {
+    dispense p;
+    dispense m;
+    move 
+}
+
+protocol conjugate p m location {
+    dispense p;
+    dispense m; 
+    combine p m;
+
+
+    
+}

@@ -1,0 +1,49 @@
+# Dune build artifacts
+/_build/
+/.dune/
+/.dune-project
+
+# Local dune file edits
+*.install
+
+# OPAM files
+.opam
+.opam-switch/
+.opam-lock/
+
+# Bytecode and native binaries
+*.cm[xioa]
+*.o
+*.a
+*.so
+*.exe
+
+# Menhir/OCamllex generated files (if not in source control)
+parser.ml
+parser.mli
+lexer.ml
+
+# OCaml REPL history
+.ocamlinit
+.utop-history
+
+# Editor/IDE backups and metadata
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+*.orig
+
+# VSCode
+.vscode/
+
+# Emacs
+*.elc
+.projectile
+
+# MacOS
+.DS_Store
+
+# Logs or custom debug files
+*.log
