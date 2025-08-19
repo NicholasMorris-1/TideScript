@@ -1,2 +1,8 @@
 (library
- (name nick_lang))
+ (name tidescript)
+(libraries unix))
+
+ (menhir
+  (modules parser))
+
+(ocamllex lexer)

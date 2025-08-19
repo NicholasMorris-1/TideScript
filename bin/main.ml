@@ -1,17 +1,15 @@
-open Syntax
-open Types
-open Functions
+open Tidescript
 
 
 let () =
   let initial_env = {
-    solutes = SoluteMap.empty;
-    solvents = SolventMap.empty;
-    solutions = SolutionMap.empty;
-    protocols = ProtocolMap.empty;
+    Types.solutes = Types.SoluteMap.empty;
+    Types.solvents = Types.SolventMap.empty;
+    Types.solutions = Types.SolutionMap.empty;
+    Types.protocols = Types.ProtocolMap.empty;
   } in
 
   let lexbuf = Lexing.from_channel stdin in
   let e = Parser.toplevel Lexer.token lexbuf in
-  let updated_env =  eval_expr e initial_env in
-  print_env updated_env
+  let updated_env =  Syntax.eval_expr e initial_env in
+  Functions.print_env updated_env

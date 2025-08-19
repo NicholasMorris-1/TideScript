@@ -1,10 +1,11 @@
 (lang dune 3.6)
 
-(name nick_lang)
+(name TideScript)
 
 (using menhir 2.0)
 
 (generate_opam_files true)
+
 
 (source
  (github username/reponame))
@@ -18,7 +19,7 @@
 (documentation https://url/to/documentation)
 
 (package
- (name nick_lang)
+ (name TideScript)
  (synopsis "A short synopsis")
  (description "A longer description")
  (depends ocaml dune)
