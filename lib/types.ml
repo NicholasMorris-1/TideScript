@@ -86,7 +86,7 @@ type expression =
   | Molsolution of string * string * float * string
   | CalculateAverageMass of string
   | GenerateSmiles of string
-  | Protocol of string * arglist * expression
+  | Protocol of string * return_type * arglist * expression
   | Dispense of string
   | FindLocation of string
   | Combine of string * string * string
@@ -96,11 +96,16 @@ type expression =
   | Print
   | Call of string * string list
 
+and return_type =
+  | VoidType
+  | SolutionType
+
 
 type protocol ={
   name : string;
   arglist : arglist;
-  expressions: expression
+  expressions: expression;
+  returntype: return_type
 }
 
 

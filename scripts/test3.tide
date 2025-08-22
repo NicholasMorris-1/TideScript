@@ -10,11 +10,9 @@ solution solx = [pepa(0.1 mM)] in [dmf];
 
 solution soly = [molb (0.1 mM)] in [dmf];
 
-solz = combine solx and soly;
 
-protocol conjugate pepsol molsol {
-          z = combine pepsol and molsol
-
+ protocol <void> conjugate (pepsol molsol) {
+         solution z = combine pepsol and molsol
 
 };
 

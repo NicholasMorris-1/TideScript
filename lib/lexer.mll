@@ -35,6 +35,7 @@ rule token = parse
   | "hours"         {HOURS}
   | "print"         {PRINT}
   | "call"          {CALL}
+  | "void"          {VOID}
   | "("             { LPAREN }
   | ")"             { RPAREN }
   | ';' 		    { SEMICOLON }

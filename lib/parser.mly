@@ -31,6 +31,7 @@
 %token GENERATE_SMILES
 %token PRINT
 %token CALL
+%token VOID
 %token LPAREN
 %token RPAREN
 %token LBRACE
@@ -78,6 +79,11 @@ solution_construction:
   | COMBINE var2 = ID AND var3 = ID
       { fun var -> Combine (var, var2, var3) }
 
+return_type:
+  | VOID { VoidType }
+  | SOLUTION { SolutionType }
+
+
 
 expression: 
   | e1 = expression SEMICOLON e2 = expression {Sequence (e1, e2)}
@@ -90,11 +96,12 @@ expression:
   //| SOLUTION var = ID EQUAL COMBINE var2 = ID AND var3 = ID {Combine(var, var2, var3)}
   | CALCULATE_AVERAGE_MASS LT var = PEPID GT {CalculateAverageMass (var)}
   | GENERATE_SMILES LT var = PEPID GT {GenerateSmiles (var)}
-  | PROTOCOL var = ID args = arglist LBRACE body = expression RBRACE   {Protocol (var, args, body)}
+  | PROTOCOL  LT ret = return_type GT var = ID LPAREN args = arglist RPAREN LBRACE body = expression RBRACE   {Protocol (var, ret, args, body)}
+  //| PROTOCOL LT SOLUTION  GT var = ID args = arglist LBRACE body = expression RBRACE   {Protocol (var, args, body)}
   | AGITATE var = ID {Agitate(var)}
   | STOP AGITATE var = ID {Deagitate(var)}
   | WAIT FOR var = NUMERAL HOURS {Wait(var)}
   | DISPENSE var = ID {Dispense var}
-  | var = ID EQUAL FIND LOCATION {FindLocation(var)}
+  //| var = ID EQUAL FIND LOCATION {FindLocation(var)}
   | PRINT {Print}
   | CALL var = ID args = list(ID)  {Call(var, args)}

@@ -203,14 +203,16 @@ let find_solute_by_name name map =
   | Not_found -> raise Not_found
 
 
-let create_protocol name arglist expressions =
+let create_protocol name returntype arglist expressions  =
   let name = name in
   let arglist = arglist in
   let expressions = expressions in
+  let returntype = returntype in
   {
     name;
     arglist;
     expressions;
+    returntype;
   }
 
 let add_protocol protocol map =
