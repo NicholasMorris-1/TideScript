@@ -12,4 +12,4 @@ solution solx = [pepa(2.0 mM)] in [dmf];
 
 solution soly = [molb(2.87 mM)] in [dmf];
 
-solution solz = mix solx (1 eq) + soly (1 eq) at 5.0 mL
+solution solz = mix solx (1.0 eq) + soly (1.0 eq) at 5.0 mL

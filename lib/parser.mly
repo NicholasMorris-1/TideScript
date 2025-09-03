@@ -83,8 +83,8 @@ solution_construction:
       { fun var -> Solution (var, args1, args2) }
   | COMBINE var2 = ID AND var3 = ID
     { fun var -> Combine (var, var2, var3) }
-  | MIX var2 = ID LPAREN NUMERAL EQ RPAREN PLUS var3 = ID LPAREN NUMERAL EQ RPAREN AT FLOAT ML
-        { fun var -> Combine (var, var2, var3) }
+  | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = FLOAT ML
+        { fun var -> Mix (var, var2, var3, eq1, eq2, vol) }
 
 
 return_type:

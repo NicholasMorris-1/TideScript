@@ -54,9 +54,8 @@ type solution = {
   solutes  : (solute * float) list;
   solvents : solvent list;
   agitate : bool;
+  volume : float option;
 }
-
-
 
 
 
@@ -90,6 +89,7 @@ type expression =
   | Dispense of string
   | FindLocation of string
   | Combine of string * string * string
+  | Mix of string * string * string * float * float * float
   | Agitate of string
   | Return of string
   | Deagitate of string

@@ -135,6 +135,7 @@ let add_solution name solute_list solvent_list map =
     solutes = solute_list;
     solvents = solvent_list;
     agitate = false;
+    volume = None;
   } in
   SolutionMap.add key solution map
 
@@ -153,8 +154,56 @@ let combine_solutions name sol1 sol2 (map: solution SolutionMap.t) =
     solutes;
     solvents;
     agitate = false;
+    volume = None;
   } in
   SolutionMap.add name solution map
+
+let mix_solutions name sol1 sol2 eq1 eq2 final_volume (map: solution SolutionMap.t) =
+  let solution_1 : solution = find_solution_by_name sol1 map in
+  let solution_2 : solution = find_solution_by_name sol2 map in
+  let stoichiometric_ratio = eq1 /. eq2 in
+  let moles_1 = solution_1.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let moles_2 = solution_2.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let volume_1 = (final_volume *. stoichiometric_ratio) /. (stoichiometric_ratio +. 1.0) in
+  let volume_2 = final_volume -. volume_1 in
+  let new_conc_1 = moles_1 /. volume_1 in
+  let new_conc_2 = moles_2 /. volume_2 in
+  let solutes_1 = List.map (fun (solute, _) -> (solute, new_conc_1)) solution_1.solutes in
+  let solutes_2 = List.map (fun (solute, _) -> (solute, new_conc_2)) solution_2.solutes in
+  let solutes = solutes_1 @ solutes_2 in
+  let solvents = solution_1.solvents @ solution_2.solvents in
+  let volume = Some final_volume in
+    let solution : solution  = {
+        solutes;
+        solvents;
+        agitate = false;
+        volume;
+      } in
+    SolutionMap.add name solution map
+
+
+
+
+let mix_solutions_simple name sol1 sol2 vol1 vol2 (map: solution SolutionMap.t) =
+  let solution_1 : solution = find_solution_by_name sol1 map in
+  let solution_2 : solution = find_solution_by_name sol2 map in
+  let dilution_factor_1 = vol1 /. (vol1 +. vol2) in
+  let dilution_factor_2 = vol2 /. (vol1 +. vol2) in
+  let solutes_1 = List.map (fun (solute, conc) -> (solute, conc *. dilution_factor_1)) solution_1.solutes in
+  let solutes_2 = List.map (fun (solute, conc) -> (solute, conc *. dilution_factor_2)) solution_2.solutes in
+  let solutes = solutes_1 @ solutes_2 in
+  let solvents = solution_1.solvents @ solution_2.solvents in
+  let volume = Some (vol1 +. vol2) in
+  let solution : solution  = {
+      solutes;
+      solvents;
+      agitate = false;
+      volume;
+    } in
+  SolutionMap.add name solution map
+
+
+
 
 let agitate_solution (solname : string) (map : solution SolutionMap.t)  =
   let solution = find_solution_by_name solname map in
@@ -162,6 +211,7 @@ let agitate_solution (solname : string) (map : solution SolutionMap.t)  =
     solutes = solution.solutes;
     solvents = solution.solvents;
     agitate = true;
+    volume = solution.volume;
   } in
   SolutionMap.add solname new_solution map
 
@@ -171,6 +221,7 @@ let de_agitate_solution (solname : string) (map : solution SolutionMap.t)  =
     solutes = solution.solutes;
     solvents = solution.solvents;
     agitate = false;
+    volume = solution.volume;
   } in
   SolutionMap.add solname new_solution map
 
