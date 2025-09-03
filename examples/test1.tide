@@ -1,0 +1,15 @@
+#declare peptide
+peptide pepa = <SADCLKSCLRMCPDRIIL>;
+
+#declare molecule
+molecule molb = (C14H31N7O8S);
+
+#declare solvent
+solvent dmf;
+
+#declare solutions by passing in materials
+solution solx = [pepa(2.0 mM)] in [dmf];
+
+solution soly = [molb(2.87 mM)] in [dmf];
+
+solution solz = mix solx (1 eq) + soly (1 eq) at 5.0 mL

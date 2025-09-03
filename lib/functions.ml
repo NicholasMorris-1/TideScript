@@ -9,6 +9,7 @@ let find_amino_acid_by_one_letter_code c = List.find (fun aa -> aa.one_letter_co
 
 (*Same as above but for three letter code, this functionality isn't utilised yet*)
 
+
 let find_amino_acid_by_three_letter_code c amino_acid_list =
   let aa =find_amino_acid_by_one_letter_code c amino_acid_list in
     aa.three_letter_code
@@ -16,10 +17,10 @@ let find_amino_acid_by_three_letter_code c amino_acid_list =
 
 (*Find the mass of a paricular amino acid by its one letter code, useful for calculating the mass of a peptide sequence*)
 
-
 let find_average_mass_by_one_letter_code c amino_acid_list =
   let aa = find_amino_acid_by_one_letter_code c amino_acid_list in
-    aa.average_mass
+  aa.average_mass
+
 
 
 (*Same as above but for the monoisotopic mass*)
@@ -28,8 +29,6 @@ let find_average_mass_by_one_letter_code c amino_acid_list =
 let find_monoisotopic_mass_by_one_letter_code  c amino_acid_list =
   let aa = find_amino_acid_by_one_letter_code c amino_acid_list in
     aa.monoisotopic_mass
-
-
 
 (*Fetch the smiles string of an amino acid from one letter code*)
 
@@ -130,7 +129,6 @@ let find_solvent_by_name name map =
 
 
 
-
 let add_solution name solute_list solvent_list map =
   let key = name in
   let solution : solution = {
@@ -188,7 +186,9 @@ let add_molecule name formula map =
       smiles = "";
     }
     in
-  SoluteMap.add key molecule map
+    SoluteMap.add key molecule map
+
+
 
 let find_molecule_by_name name map =
   try
@@ -214,6 +214,9 @@ let create_protocol name returntype arglist expressions  =
     expressions;
     returntype;
   }
+
+let return_solution solution =
+  print_endline solution
 
 let add_protocol protocol map =
   let key = protocol.name in
@@ -292,4 +295,4 @@ let print_env env =
   print_newline ();
   print_endline "SOLVENTS:";
   print_solvents env.solvents;
-   print_newline ()
+  print_newline ()

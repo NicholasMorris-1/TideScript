@@ -34,6 +34,7 @@ let rec eval_expr (e : expression)(env : env): env =
     {env with solutions = add_solution var solute_list solvent_list env.solutions})
   | Combine (s1, s2, s3) -> {env with solutions = combine_solutions s1 s2 s3 env.solutions}
   | Agitate (s) -> {env with solutions = agitate_solution s env.solutions}
+  | Return (s) -> {env with solutions = agitate_solution s env.solutions}
   | Deagitate(s) -> {env with solutions = de_agitate_solution s env.solutions}
   | Wait(x) ->
       let () = Unix.sleep 2 in

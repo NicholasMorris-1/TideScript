@@ -18,6 +18,8 @@ rule token = parse
   | "solution"      {SOLUTION}
   | "in"            {IN}
   | "mM"            {MM}
+  | "mL"            {ML}
+  | "eq"            {EQ}
   | "calculate_average_mass"  {CALCULATE_AVERAGE_MASS}
   | "generate_smiles"      {GENERATE_SMILES}
   | "protocol"      {PROTOCOL}
@@ -25,20 +27,23 @@ rule token = parse
   | "find"          {FIND} 
   | "location"      {LOCATION}
   | "combine"       {COMBINE}
+  | "mix"           {MIX}
   | "and"           {AND}
   | "at"            {AT}
-  | "agitate"          {AGITATE}
+  | "agitate"       {AGITATE}
   | "stop"          {STOP}
-  | "wait"           {WAIT}
+  | "wait"          {WAIT}
   | "for"           {FOR}
   | "minutes"       {MINUTES}
   | "hours"         {HOURS}
   | "print"         {PRINT}
   | "call"          {CALL}
   | "void"          {VOID}
+  | "return"        {RETURN}
   | "("             { LPAREN }
   | ")"             { RPAREN }
   | ';' 		    { SEMICOLON }
+  | '+'             {PLUS}
   | '='             { EQUAL }
   | "<"             { LT }
   | ">"             { GT }

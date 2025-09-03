@@ -1,7 +1,7 @@
 (*This module defines some types that are useful for chemistry. Properties of different species is encoded in, with scope to expand this*)
 
 type amino_acid =
-  { 
+  {
     number: int;
     name: string;
     three_letter_code: string;
@@ -11,9 +11,9 @@ type amino_acid =
     formula: string;
     smiles: string;
 
-  } 
+  }
 
-  type peptide = 
+  type peptide =
   {
     sequence: amino_acid list;
     average_mass: float;
@@ -35,7 +35,7 @@ type solvent =
   {
     solname: string;
     formula: string;
-    protic: bool; 
+    protic: bool;
     polar: bool;
  }
 
@@ -91,6 +91,7 @@ type expression =
   | FindLocation of string
   | Combine of string * string * string
   | Agitate of string
+  | Return of string
   | Deagitate of string
   | Wait of int
   | Print
@@ -154,5 +155,4 @@ type env = {
   solvents : solvent SolventMap.t;
   solutions : solution SolutionMap.t;
   protocols : protocol ProtocolMap.t
-
 }

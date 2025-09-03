@@ -17,16 +17,21 @@
 %token FIND
 %token LOCATION
 %token IN
+%token MIX
 %token COMBINE
 %token AND
 %token AT
 %token AGITATE
+%token RETURN
 %token STOP
 %token WAIT
+%token PLUS
 %token FOR
 %token MINUTES
 %token HOURS
+%token EQ
 %token MM
+%token ML
 %token CALCULATE_AVERAGE_MASS
 %token GENERATE_SMILES
 %token PRINT
@@ -77,7 +82,10 @@ solution_construction:
   | LBRAC args1 = sollist RBRAC IN LBRAC args2 = solvnlist RBRAC
       { fun var -> Solution (var, args1, args2) }
   | COMBINE var2 = ID AND var3 = ID
-      { fun var -> Combine (var, var2, var3) }
+    { fun var -> Combine (var, var2, var3) }
+  | MIX var2 = ID LPAREN NUMERAL EQ RPAREN PLUS var3 = ID LPAREN NUMERAL EQ RPAREN AT FLOAT ML
+        { fun var -> Combine (var, var2, var3) }
+
 
 return_type:
   | VOID { VoidType }
@@ -85,23 +93,20 @@ return_type:
 
 
 
-expression: 
+expression:
   | e1 = expression SEMICOLON e2 = expression {Sequence (e1, e2)}
   | PEPTIDE var = ID EQUAL LT var2 = PEPID GT {Addpeptide (var, var2)}
   | MOLECULE var = ID EQUAL LPAREN var2 = MOLID RPAREN {Addmolecule (var, var2)}
   | SOLVENT var = ID {Solvent var}
   | SOLUTION var = ID EQUAL sc = solution_construction { sc var }
-  //| SOLUTION var = ID EQUAL LBRAC args1 = sollist RBRAC IN LBRAC args2 = solvnlist RBRAC {Solution (var, args1, args2 }
-  //| SOLUTION var = ID EQUAL solution_construction {var, solution_construction}
-  //| SOLUTION var = ID EQUAL COMBINE var2 = ID AND var3 = ID {Combine(var, var2, var3)}
-  | CALCULATE_AVERAGE_MASS LT var = PEPID GT {CalculateAverageMass (var)}
-  | GENERATE_SMILES LT var = PEPID GT {GenerateSmiles (var)}
+  //| CALCULATE_AVERAGE_MASS LT var = PEPID GT {CalculateAverageMass (var)}
+  //| GENERATE_SMILES LT var = PEPID GT {GenerateSmiles (var)}
   | PROTOCOL  LT ret = return_type GT var = ID LPAREN args = arglist RPAREN LBRACE body = expression RBRACE   {Protocol (var, ret, args, body)}
   //| PROTOCOL LT SOLUTION  GT var = ID args = arglist LBRACE body = expression RBRACE   {Protocol (var, args, body)}
+  | RETURN var = ID {Return(var)}
   | AGITATE var = ID {Agitate(var)}
   | STOP AGITATE var = ID {Deagitate(var)}
   | WAIT FOR var = NUMERAL HOURS {Wait(var)}
   | DISPENSE var = ID {Dispense var}
-  //| var = ID EQUAL FIND LOCATION {FindLocation(var)}
   | PRINT {Print}
   | CALL var = ID args = list(ID)  {Call(var, args)}
