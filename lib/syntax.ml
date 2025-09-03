@@ -36,6 +36,7 @@ let rec eval_expr (e : expression)(env : env): env =
   | Mix (s1, s2, s3, eq1, eq2, v) -> {env with solutions = mix_solutions s1 s2 s3 eq1 eq2 v env.solutions}
   | Agitate (s) -> {env with solutions = agitate_solution s env.solutions}
   | Return (s) -> {env with solutions = agitate_solution s env.solutions}
+  | ChangeTemp (s, t) -> {env with solutions = change_temp_solution s t env.solutions}
   | Deagitate(s) -> {env with solutions = de_agitate_solution s env.solutions}
   | Wait(x) ->
       let () = Unix.sleep 2 in

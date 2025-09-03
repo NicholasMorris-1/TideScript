@@ -136,6 +136,7 @@ let add_solution name solute_list solvent_list map =
     solvents = solvent_list;
     agitate = false;
     volume = None;
+    temperature = None;
   } in
   SolutionMap.add key solution map
 
@@ -155,6 +156,7 @@ let combine_solutions name sol1 sol2 (map: solution SolutionMap.t) =
     solvents;
     agitate = false;
     volume = None;
+    temperature = None;
   } in
   SolutionMap.add name solution map
 
@@ -178,6 +180,7 @@ let mix_solutions name sol1 sol2 eq1 eq2 final_volume (map: solution SolutionMap
         solvents;
         agitate = false;
         volume;
+        temperature = None;
       } in
     SolutionMap.add name solution map
 
@@ -199,6 +202,7 @@ let mix_solutions_simple name sol1 sol2 vol1 vol2 (map: solution SolutionMap.t) 
       solvents;
       agitate = false;
       volume;
+      temperature = None;
     } in
   SolutionMap.add name solution map
 
@@ -212,6 +216,7 @@ let agitate_solution (solname : string) (map : solution SolutionMap.t)  =
     solvents = solution.solvents;
     agitate = true;
     volume = solution.volume;
+    temperature = solution.temperature;
   } in
   SolutionMap.add solname new_solution map
 
@@ -222,8 +227,25 @@ let de_agitate_solution (solname : string) (map : solution SolutionMap.t)  =
     solvents = solution.solvents;
     agitate = false;
     volume = solution.volume;
+    temperature = solution.temperature;
   } in
   SolutionMap.add solname new_solution map
+
+let change_temp_solution (solname : string) (temp : float) (map : solution SolutionMap.t)  =
+  let solution = find_solution_by_name solname map in
+  let new_solution : solution = {
+    solutes = solution.solutes;
+    solvents = solution.solvents;
+    agitate = solution.agitate;
+    volume = solution.volume;
+    temperature = Some temp;
+  } in
+  SolutionMap.add solname new_solution map
+
+
+
+
+(*This function adds user declared molecules to map*)
 
 let add_molecule name formula map =
   let key = name in

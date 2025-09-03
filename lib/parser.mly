@@ -21,7 +21,9 @@
 %token COMBINE
 %token AND
 %token AT
+%token TO
 %token AGITATE
+%token CHANGETEMP
 %token RETURN
 %token STOP
 %token WAIT
@@ -31,6 +33,7 @@
 %token HOURS
 %token EQ
 %token MM
+%token C
 %token ML
 %token CALCULATE_AVERAGE_MASS
 %token GENERATE_SMILES
@@ -104,6 +107,7 @@ expression:
   | PROTOCOL  LT ret = return_type GT var = ID LPAREN args = arglist RPAREN LBRACE body = expression RBRACE   {Protocol (var, ret, args, body)}
   //| PROTOCOL LT SOLUTION  GT var = ID args = arglist LBRACE body = expression RBRACE   {Protocol (var, args, body)}
   | RETURN var = ID {Return(var)}
+  | CHANGETEMP var = ID TO temp = FLOAT C {ChangeTemp(var, temp)}
   | AGITATE var = ID {Agitate(var)}
   | STOP AGITATE var = ID {Deagitate(var)}
   | WAIT FOR var = NUMERAL HOURS {Wait(var)}

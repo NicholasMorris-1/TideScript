@@ -12,4 +12,14 @@ solution solx = [pepa(2.0 mM)] in [dmf];
 
 solution soly = [molb(2.87 mM)] in [dmf];
 
-solution solz = mix solx (1.0 eq) + soly (1.0 eq) at 5.0 mL
+protocol <solution> conjugate (pepsol molsol){
+         solution solz = mix pepsol (1.0 eq) + molsol (3.0 eq) at 5.0 mL;
+         agitate solz;
+         changeTemp solz to 21.0 C;
+         wait for 3 hours;
+         return solz
+};
+
+call conjugate solx soly;
+
+call conjugate solx soly

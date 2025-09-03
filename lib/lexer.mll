@@ -18,6 +18,7 @@ rule token = parse
   | "solution"      {SOLUTION}
   | "in"            {IN}
   | "mM"            {MM}
+  | "C"             {C}
   | "mL"            {ML}
   | "eq"            {EQ}
   | "calculate_average_mass"  {CALCULATE_AVERAGE_MASS}
@@ -30,7 +31,9 @@ rule token = parse
   | "mix"           {MIX}
   | "and"           {AND}
   | "at"            {AT}
+  | "to"            {TO}
   | "agitate"       {AGITATE}
+  | "changeTemp"    {CHANGETEMP}
   | "stop"          {STOP}
   | "wait"          {WAIT}
   | "for"           {FOR}
