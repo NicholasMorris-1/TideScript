@@ -21,6 +21,16 @@ let find_average_mass_by_one_letter_code c amino_acid_list =
   let aa = find_amino_acid_by_one_letter_code c amino_acid_list in
   aa.average_mass
 
+let is_a_return expr =
+  match expr with
+  | Return _ -> true
+  | _ -> false
+
+let is_there_a_return exprs =
+  List.exists is_a_return exprs
+
+let does_protocol_have_return protocol =
+  is_there_a_return [protocol.expressions]
 
 
 (*Same as above but for the monoisotopic mass*)
@@ -287,6 +297,7 @@ let create_protocol name returntype arglist expressions  =
     expressions;
     returntype;
   }
+
 
 let return_solution solution =
   print_endline solution

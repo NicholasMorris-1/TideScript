@@ -87,8 +87,7 @@ solution_construction:
   | COMBINE var2 = ID AND var3 = ID
     { fun var -> Combine (var, var2, var3) }
   | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = volume_type ML
-        { fun var -> Mix (var, var2, var3, eq1, eq2, vol) }
-
+    { fun var -> Mix (var, var2, var3, eq1, eq2, vol) }
 
 return_type:
   | VOID { VoidType }
