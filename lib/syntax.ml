@@ -21,6 +21,12 @@ let rec create_solvent_list solvnlist map =
   | EmptySolvnlist -> []
   | Solvnlist (s, rest) -> (find_solvent_by_name s map )::(create_solvent_list rest map)
 
+let volume_to_float voltype  =
+    match voltype with
+  | Volume f -> f
+  | NoVolume -> 1.0  (* Default volume if none specified *)
+
+
 
 
 let rec eval_expr (e : expression)(env : env): env =
@@ -33,7 +39,9 @@ let rec eval_expr (e : expression)(env : env): env =
    let solvent_list = create_solvent_list args2 env.solvents in
     {env with solutions = add_solution var solute_list solvent_list env.solutions})
   | Combine (s1, s2, s3) -> {env with solutions = combine_solutions s1 s2 s3 env.solutions}
-  | Mix (s1, s2, s3, eq1, eq2, v) -> {env with solutions = mix_solutions s1 s2 s3 eq1 eq2 v env.solutions}
+  | Mix (s1, s2, s3, eq1, eq2, v) ->
+    let vol_float = volume_to_float v in
+    {env with solutions = mix_solutions s1 s2 s3 eq1 eq2 vol_float env.solutions}
   | Agitate (s) -> {env with solutions = agitate_solution s env.solutions}
   | Return (s) -> {env with solutions = agitate_solution s env.solutions}
   | ChangeTemp (s, t) -> {env with solutions = change_temp_solution s t env.solutions}

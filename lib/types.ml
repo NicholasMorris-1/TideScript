@@ -77,6 +77,10 @@ let rec arglist_to_lst args =
   | EmptyArglist -> []
   | Arglist(s,l) -> s :: (arglist_to_lst l)
 
+type volume_type =
+  | Volume of float
+  | NoVolume
+
 type expression =
   | Sequence of expression * expression
   | Addpeptide of string * string
@@ -91,7 +95,7 @@ type expression =
   | FindLocation of string
   | Combine of string * string * string
   | ChangeTemp of string * float
-  | Mix of string * string * string * float * float * float
+  | Mix of string * string * string * float * float * volume_type
   | Agitate of string
   | Return of string
   | Deagitate of string
@@ -102,6 +106,8 @@ type expression =
 and return_type =
   | VoidType
   | SolutionType
+
+
 
 
 type protocol ={

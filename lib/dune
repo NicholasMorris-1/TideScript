@@ -3,6 +3,7 @@
 (libraries unix))
 
  (menhir
-  (modules parser))
+ (modules parser)
+ (flags --explain  --unused-tokens))
 
 (ocamllex lexer)
