@@ -69,9 +69,18 @@ toplevel: e = expression EOF
   { e }
 ;
 
-arglist:
-  | var = ID rest = arglist {Arglist(var, rest)}
-  |  { EmptyArglist }
+argument:
+  | v = ID {StringArg(v)}
+  | x = FLOAT {FloatArg(x)}
+
+argument_list:
+  | arg = argument rest = argument_list {arg :: rest}
+  |  { [] }
+
+
+//arglist:
+  //| var = argument rest = arglist {Arglist(var, rest)}
+//  |  { EmptyArglist }
 
 sollist:
   |   var = ID LPAREN conc = FLOAT MM RPAREN  rest = sollist {Sollist(var, conc, rest)}
@@ -86,16 +95,16 @@ solution_construction:
       { fun var -> Solution (var, args1, args2) }
   | COMBINE var2 = ID AND var3 = ID
     { fun var -> Combine (var, var2, var3) }
-  | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = volume_type ML
+  | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = FLOAT  ML
     { fun var -> Mix (var, var2, var3, eq1, eq2, vol) }
 
 return_type:
   | VOID { VoidType }
   | SOLUTION { SolutionType }
 
-volume_type:
-  | v = FLOAT { Volume v }
-  | ID { NoVolume}
+//volume_type:
+  //| v = FLOAT { Volume v }
+//  | ID { NoVolume}
 
 
 
@@ -107,7 +116,7 @@ expression:
   | SOLUTION var = ID EQUAL sc = solution_construction { sc var }
   //| CALCULATE_AVERAGE_MASS LT var = PEPID GT {CalculateAverageMass (var)}
   //| GENERATE_SMILES LT var = PEPID GT {GenerateSmiles (var)}
-  | PROTOCOL  LT ret = return_type GT var = ID LPAREN args = arglist RPAREN LBRACE body = expression RBRACE   {Protocol (var, ret, args, body)}
+  | PROTOCOL  LT ret = return_type GT var = ID LPAREN args = argument_list RPAREN LBRACE body = expression RBRACE   {Protocol (var, ret, args, body)}
   //| PROTOCOL LT SOLUTION  GT var = ID args = arglist LBRACE body = expression RBRACE   {Protocol (var, args, body)}
   | RETURN var = ID {Return(var)}
   | CHANGETEMP var = ID TO temp = FLOAT C {ChangeTemp(var, temp)}
@@ -116,4 +125,4 @@ expression:
   | WAIT FOR var = NUMERAL HOURS {Wait(var)}
   | DISPENSE var = ID {Dispense var}
   | PRINT {Print}
-  | CALL var = ID args = list(ID)  {Call(var, args)}
+  | CALL var = ID args = argument_list  {Call_2(var, args)}

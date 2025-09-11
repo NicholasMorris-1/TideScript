@@ -21,10 +21,10 @@ let rec create_solvent_list solvnlist map =
   | EmptySolvnlist -> []
   | Solvnlist (s, rest) -> (find_solvent_by_name s map )::(create_solvent_list rest map)
 
-let volume_to_float voltype  =
+(*let volume_to_float voltype  =
     match voltype with
   | Volume f -> f
-  | NoVolume -> 1.0  (* Default volume if none specified *)
+  | NoVolume -> 1.0  (* Default volume if none specified *)*)
 
 
 
@@ -40,7 +40,7 @@ let rec eval_expr (e : expression)(env : env): env =
     {env with solutions = add_solution var solute_list solvent_list env.solutions})
   | Combine (s1, s2, s3) -> {env with solutions = combine_solutions s1 s2 s3 env.solutions}
   | Mix (s1, s2, s3, eq1, eq2, v) ->
-    let vol_float = volume_to_float v in
+    let vol_float =  v in
     {env with solutions = mix_solutions s1 s2 s3 eq1 eq2 vol_float env.solutions}
   | Agitate (s) -> {env with solutions = agitate_solution s env.solutions}
   | Return (s) -> {env with solutions = agitate_solution s env.solutions}
@@ -54,14 +54,21 @@ let rec eval_expr (e : expression)(env : env): env =
   (*| GenerateSmiles (s) -> let x = generate_smiles s in print_string x; print_newline()*)
   | Protocol (s,r, a, e) -> {env with protocols = add_protocol(create_protocol s r a e) env.protocols  }
   | Call(s, args) ->(
-    let env' = bind_args env s args in
+
+    let env' = bind_args_2 env s args in
     let p = retrieve_protocol s env.protocols in
     match p.returntype with
     | VoidType ->
         let _ = eval_expr p.expressions env' in
         env
     | SolutionType ->
-        raise (Failure ("Protocol " ^ s ^ " has return type Solution, but return value not handled")))
+       raise (Failure ("Protocol " ^ s ^ " has return type Solution, but return value not handled")))
+  | Call_2 (s, args) ->
+     let p = retrieve_protocol s env.protocols in
+     let bound_p = bind_params_with_args_in_protocol p args in
+     let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
+     eval_expr alpha_converted_expr env
+
   (*| Dispense (v) -> print_string "Dispense "; print_string v; print_newline()
     | FindLocation(v) -> print_string "FindLocation "; print_string v; print_newline()*)
   (*| Agitate (v, i) -> print_string "Agitate "; print_string v; print_string " "; print_int i; print_newline()*)

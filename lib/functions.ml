@@ -21,16 +21,6 @@ let find_average_mass_by_one_letter_code c amino_acid_list =
   let aa = find_amino_acid_by_one_letter_code c amino_acid_list in
   aa.average_mass
 
-let is_a_return expr =
-  match expr with
-  | Return _ -> true
-  | _ -> false
-
-let is_there_a_return exprs =
-  List.exists is_a_return exprs
-
-let does_protocol_have_return protocol =
-  is_there_a_return [protocol.expressions]
 
 
 (*Same as above but for the monoisotopic mass*)
@@ -170,7 +160,7 @@ let combine_solutions name sol1 sol2 (map: solution SolutionMap.t) =
   } in
   SolutionMap.add name solution map
 
-let mix_solutions name sol1 sol2 eq1 eq2 final_volume (map: solution SolutionMap.t) =
+let mix_solutions name sol1 sol2 eq1 eq2 (final_volume: float) (map: solution SolutionMap.t) =
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
   let stoichiometric_ratio = eq1 /. eq2 in
@@ -252,10 +242,19 @@ let change_temp_solution (solname : string) (temp : float) (map : solution Solut
   } in
   SolutionMap.add solname new_solution map
 
+let is_a_return expr =
+  match expr with
+  | Return _ -> true
+  | _ -> false
+
+let is_there_a_return exprs =
+  List.exists is_a_return exprs
+
+let does_protocol_have_return protocol =
+  is_there_a_return [protocol.expressions]
 
 
-
-(*This function adds user declared molecules to map*)
+   (*This function adds user declared molecules to map*)
 
 let add_molecule name formula map =
   let key = name in
@@ -286,21 +285,31 @@ let find_solute_by_name name map =
   | Not_found -> raise Not_found
 
 
-let create_protocol name returntype arglist expressions  =
+let return_solution solution =
+  print_endline solution
+
+
+let create_empty_env () = {
+  solutes = SoluteMap.empty;
+  solvents = SolventMap.empty;
+  solutions = SolutionMap.empty;
+  protocols = ProtocolMap.empty
+}
+
+
+let create_protocol name returntype (arglist: arg list) expressions  =
   let name = name in
   let arglist = arglist in
   let expressions = expressions in
   let returntype = returntype in
+  let returnSolution = None in
   {
     name;
     arglist;
     expressions;
     returntype;
+    returnSolution;
   }
-
-
-let return_solution solution =
-  print_endline solution
 
 let add_protocol protocol map =
   let key = protocol.name in
@@ -312,10 +321,205 @@ let retrieve_protocol name map =
   with
   | Not_found -> raise Not_found
 
+let bind_arg_2 env (argname :arg) (callname : arg) =
+  match argname with
+  | StringArg s1 ->
+    (match callname with
+    | StringArg s2 ->
+      let solution = find_solution_by_name s2 env.solutions in
+      let smap = SolutionMap.add s1 solution env.solutions in
+      {env with solutions = smap}
+    | FloatArg _ -> raise (Failure "Type mismatch: expected StringArg"))
+  | FloatArg f1 ->
+     (match callname with
+        | FloatArg f2 ->
+        let solution = find_solution_by_name (string_of_float f2) env.solutions in
+        let smap = SolutionMap.add (string_of_float f1) solution env.solutions in
+        {env with solutions = smap}
+        | StringArg _ -> raise (Failure "Type mismatch: expected FloatArg"))
+
+let bind_args_2 env pid (pargs: arg list) =
+  let p = retrieve_protocol pid env.protocols in
+  let bargs = List.fold_left2 (fun  acc a i -> bind_arg_2 acc a i) env ( p.arglist) pargs in
+  bargs
+
+let var_counter = ref 0
+
+let tmp_var () : string =
+  incr var_counter;
+  "tmp" ^ string_of_int !var_counter
+
+let rec free_vars (expr : expression) : string list =
+  match expr with
+  | Sequence (e1, e2) -> (free_vars e1) @ (free_vars e2)
+  | Addpeptide (s, _) -> [s]
+  | Addmolecule (s, _) -> [s]
+  | Solvent s -> [s]
+  | Solution (var, _, _) -> [var]
+  | Combine (s1, s2, s3) -> [s1; s2; s3]
+  | Mix (s1, s2, s3, _, _, _) -> [s1; s2; s3]
+  | Agitate s -> [s]
+  | Deagitate s -> [s]
+  | ChangeTemp (s, _) -> [s]
+  | Wait _ -> []
+  | Protocol (_, _, _, e) -> free_vars e
+  | Call (s, args) ->
+      let arg_vars = List.fold_left (fun acc arg ->
+        match arg with
+        | StringArg str -> str :: acc
+        | FloatArg f -> (string_of_float f) :: acc
+      ) [] args in
+      s :: arg_vars
+  | Return s -> [s]
+  | Print -> []
+  (*| Dispense v -> [v]
+    | FindLocation v -> [v]*)
+  (*| Agitate (v, _) -> [v]*)
+  | _ -> []
+
+
+let rec alpha_convert (avoid_vars : string list) (expr : expression) : expression =
+  match expr with
+  | Sequence (e1, e2) ->
+      let new_e1 = alpha_convert avoid_vars e1 in
+      let new_e2 = alpha_convert avoid_vars e2 in
+      Sequence (new_e1, new_e2)
+  | Solution (var, args1, args2) ->
+      if List.mem var avoid_vars then
+        let new_var = tmp_var () in
+        let new_avoid_vars = new_var :: avoid_vars in
+        let new_e = Solution (new_var, args1, args2) in
+        alpha_convert new_avoid_vars new_e
+      else
+        Solution (var, args1, args2)
+  | Protocol (name, returntype, arglist, e) ->
+      let arg_names = List.map (function StringArg s -> s | FloatArg f -> string_of_float f) arglist in
+      let new_avoid_vars = arg_names @ avoid_vars in
+      let new_e = alpha_convert new_avoid_vars e in
+      Protocol (name, returntype, arglist, new_e)
+  | Call (s, args) ->
+      let arg_names = List.map (function StringArg s -> s | FloatArg f -> string_of_float f) args in
+      let new_avoid_vars = arg_names @ avoid_vars in
+      let new_args = List.map (function
+        | StringArg s when List.mem s new_avoid_vars -> StringArg (tmp_var ())
+        | FloatArg f when List.mem (string_of_float f) new_avoid_vars -> FloatArg (float_of_string (tmp_var ()))
+        | arg -> arg
+      ) args in
+      Call (s, new_args)
+  | _ -> expr
+
+
+let rec substitute_var (old_var : string) (new_var : string) (expr : expression) : expression =
+    match expr with
+    | Sequence (e1, e2) ->
+        let new_e1 = substitute_var old_var new_var e1 in
+        let new_e2 = substitute_var old_var new_var e2 in
+        Sequence (new_e1, new_e2)
+    | Addpeptide (s, t) ->
+        let new_s = if s = old_var then new_var else s in
+        Addpeptide (new_s, t)
+    | Addmolecule (s, t) ->
+        let new_s = if s = old_var then new_var else s in
+        Addmolecule (new_s, t)
+    | Solvent s ->
+        let new_s = if s = old_var then new_var else s in
+        Solvent new_s
+    | Solution (var, args1, args2) ->
+        let new_var = if var = old_var then new_var else var in
+        Solution (new_var, args1, args2)
+    | Combine (s1, s2, s3) ->
+        let new_s1 = if s1 = old_var then new_var else s1 in
+        let new_s2 = if s2 = old_var then new_var else s2 in
+        let new_s3 = if s3 = old_var then new_var else s3 in
+        Combine (new_s1, new_s2, new_s3)
+    | Mix (s1, s2, s3, eq1, eq2, v) ->
+        let new_s1 = if s1 = old_var then new_var else s1 in
+        let new_s2 = if s2 = old_var then new_var else s2 in
+        let new_s3 = if s3 = old_var then new_var else s3 in
+        let new_eq1 = if string_of_float eq1 = old_var then float_of_string new_var else eq1 in
+        let new_eq2 = if string_of_float eq2 = old_var then float_of_string new_var  else  eq2 in
+        let new_v = if string_of_float v = old_var then float_of_string new_var else v in
+        Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, new_v)
+    | Agitate s ->
+        let new_s = if s = old_var then new_var else s in
+        Agitate new_s
+    | Deagitate s ->
+        let new_s = if s = old_var then new_var else s in
+        Deagitate new_s
+    | ChangeTemp (s, t) ->
+       let new_s = if s = old_var then new_var else s in
+       ChangeTemp (new_s, t)
+    | Wait x -> Wait x
+    | Protocol (name, returntype, arglist, e) ->
+       let new_e = substitute_var old_var new_var e in
+       Protocol (name, returntype, arglist, new_e)
+    | Call (s, args) ->
+       let new_s = if s = old_var then new_var else s in
+         let new_args = List.map (function
+            | StringArg s when s = old_var -> StringArg new_var
+            | FloatArg f when string_of_float f = old_var -> FloatArg (float_of_string new_var)
+            | arg -> arg
+                          ) args in
+         Call (new_s, new_args)
+    | Return s ->
+       let new_s = if s = old_var then new_var else s in
+       Return new_s
+    | Print -> Print
+    | _ -> expr
+                 (*| Dispense v -> let new_v = if v = old_var then new_var
+                                else v in Dispense new_v
+                   | FindLocation v -> let new_v = if v = old_var then new_var
+                                        else v in FindLocation new_v*)
+
+let substitue_multiple_vars (subst_list : (string * string) list) (expr : expression) : expression =
+  List.fold_left (fun acc (old_var, new_var) -> substitute_var old_var new_var acc) expr subst_list
+
+let bind_params_with_args_in_protocol (protocol : protocol) (args : arg list) : protocol =
+  let param_names = List.map (function StringArg s -> s | FloatArg f -> string_of_float f) protocol.arglist in
+  let arg_names = List.map (function StringArg s -> s | FloatArg f -> string_of_float f) args in
+  if List.length param_names <> List.length arg_names then
+    raise (Failure "Argument count does not match parameter count");
+  let subst_list = List.combine param_names arg_names in
+  let new_expressions = substitue_multiple_vars subst_list protocol.expressions in
+  { protocol with expressions = new_expressions; arglist = args }
+
+let bind_params (formal_params : arg list) (actual_args : arg list) (expr : expression) : expression =
+  let param_names = List.map (function StringArg s -> s | FloatArg f -> string_of_float f) formal_params in
+  let arg_names = List.map (function StringArg s -> s | FloatArg f -> string_of_float f) actual_args in
+  if List.length param_names <> List.length arg_names then
+    raise (Failure "Argument count does not match parameter count");
+  let subst_list = List.combine param_names arg_names in
+  substitue_multiple_vars subst_list expr
+
+(*let apply_protocol (protocol : protocol) (args : arg list) env : env =
+  let bound_protocol = bind_params_with_args_in_protocol protocol args in
+  let alpha_converted_expr = alpha_convert (free_vars bound_protocol.expressions) bound_protocol.expressions in
+  eval_expr alpha_converted_expr env*)
 
 
 
-let bind_arg env argname callname =
+
+(*let swap_arg_in_expression (param : arg) (arg : arg) (expr : expression) : expression =
+  match expr with
+  | Mix (s1, s2, s3, eq1, eq2, v) ->
+      let new_s1 = if s1 = param then arg else s1 in
+      let new_s2 = if s2 = param then arg else s2 in
+      let new_s3 = if s3 = param then arg else s3 in
+      Mix (new_s1, new_s2, new_s3, eq1, eq2, v)
+  | _ -> expr*)
+
+(*let bind_args_3 env pid pargs =
+  let p = retrieve_protocol pid env.protocols in
+  let new_protocol = swap_params_with_args_in_procotol p pargs in
+    let _ = eval_expr new_protocol.expressions env in
+    env*)
+
+
+(* Make an environment mapping param names to call args *)
+(*let make_subst (params : arg list) (args : arg list) : (string * arg) list =
+  List.map2 (fun param actual -> (param.name, actual)) params args*)
+
+(*let bind_arg env argname callname =
   let solution = find_solution_by_name callname env.solutions in
   let smap = SolutionMap.add argname solution env.solutions in
   {env with solutions = smap}
@@ -323,7 +527,7 @@ let bind_arg env argname callname =
  let bind_args env pid pargs =
   let p = retrieve_protocol pid env.protocols in
   let bargs = List.fold_left2 (fun  acc a i -> bind_arg acc a i) env (arglist_to_lst  p.arglist) pargs in
-  bargs
+  bargs*)
 
 
 let print_peptide peptide =
@@ -337,6 +541,7 @@ let print_solute = function
   | Peptide p -> print_peptide p
   | Molecule m -> print_molecule m
 
+
 let print_solvent (solvent : solvent) =
   print_endline solvent.solname
 
@@ -346,7 +551,8 @@ let print_solution (solution : solution) =
     Printf.printf "concentration: %.2f, " conc
   ) solution.solutes;
   List.iter print_solvent solution.solvents;
-  Printf.printf "agitating: %b\n" solution.agitate
+  Printf.printf "agitating: %b\n" solution.agitate;
+  Printf.printf "volume: %s\n" (match solution.volume with Some v -> string_of_float v | None -> "None")
 
 let print_solutes map =
   SoluteMap.iter (fun k v ->

@@ -58,11 +58,17 @@ type solution = {
   temperature : float option;
 }
 
+type arg =
+  | StringArg of string
+  | FloatArg of float
 
+type pararm =
+  | StringParam of string
+  | FloatParam of float
 
 type arglist =
  | EmptyArglist
- | Arglist of string * arglist
+ | Arglist of arg * arglist
 
 type sollist =
   | EmptySollist
@@ -72,14 +78,14 @@ type solvnlist =
   | EmptySolvnlist
   | Solvnlist of string * solvnlist
 
-let rec arglist_to_lst args =
+let rec arglist_to_lst (args: arglist) =
   match args with
   | EmptyArglist -> []
   | Arglist(s,l) -> s :: (arglist_to_lst l)
 
-type volume_type =
+(*type volume_type =
   | Volume of float
-  | NoVolume
+  | NoVolume*)
 
 type expression =
   | Sequence of expression * expression
@@ -90,18 +96,19 @@ type expression =
   | Molsolution of string * string * float * string
   | CalculateAverageMass of string
   | GenerateSmiles of string
-  | Protocol of string * return_type * arglist * expression
+  | Protocol of string * return_type * arg list * expression
   | Dispense of string
   | FindLocation of string
   | Combine of string * string * string
   | ChangeTemp of string * float
-  | Mix of string * string * string * float * float * volume_type
+  | Mix of string * string * string * float * float * float
   | Agitate of string
   | Return of string
   | Deagitate of string
   | Wait of int
   | Print
-  | Call of string * string list
+  | Call of string * arg list
+  | Call_2 of string * arg list
 
 and return_type =
   | VoidType
@@ -112,9 +119,10 @@ and return_type =
 
 type protocol ={
   name : string;
-  arglist : arglist;
+  arglist : arg list;
   expressions: expression;
-  returntype: return_type
+  returntype: return_type;
+  returnSolution : solution option;
 }
 
 
@@ -163,4 +171,4 @@ type env = {
   solvents : solvent SolventMap.t;
   solutions : solution SolutionMap.t;
   protocols : protocol ProtocolMap.t
-}
+  }
