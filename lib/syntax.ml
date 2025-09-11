@@ -26,6 +26,13 @@ let rec create_solvent_list solvnlist map =
   | Volume f -> f
   | NoVolume -> 1.0  (* Default volume if none specified *)*)
 
+let init_env = {
+  solutes = SoluteMap.empty;
+  solvents = SolventMap.empty;
+  solutions = SolutionMap.empty;
+  protocols = ProtocolMap.empty;
+}
+
 
 
 
@@ -37,10 +44,10 @@ let rec eval_expr (e : expression)(env : env): env =
   | Solvent (s)  -> {env with solvents = add_solvent s env.solvents}
   | Solution (var, args1, args2) -> (let solute_list = create_solute_list args1 env.solutes in
    let solvent_list = create_solvent_list args2 env.solvents in
-    {env with solutions = add_solution var solute_list solvent_list env.solutions})
+    {env with solutions = init_solution var solute_list solvent_list env.solutions})
   | Combine (s1, s2, s3) -> {env with solutions = combine_solutions s1 s2 s3 env.solutions}
   | Mix (s1, s2, s3, eq1, eq2, v) ->
-    let vol_float =  v in
+     let vol_float =  v in
     {env with solutions = mix_solutions s1 s2 s3 eq1 eq2 vol_float env.solutions}
   | Agitate (s) -> {env with solutions = agitate_solution s env.solutions}
   | Return (s) -> {env with solutions = agitate_solution s env.solutions}
@@ -68,6 +75,38 @@ let rec eval_expr (e : expression)(env : env): env =
      let bound_p = bind_params_with_args_in_protocol p args in
      let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
      eval_expr alpha_converted_expr env
+  (*| Call_3 (s, args) ->
+     let p_env = init_env in
+     let p = retrieve_protocol s env.protocols in
+     let bound_p = bind_params_with_args_in_protocol p args in
+     let alpha_converted_expr_list = List.map (alpha_convert (free_vars bound_p.expressions)) [bound_p.expressions] in
+     List.iter (fun expr -> match expr with
+       | Mix (s1, s2, s3, eq1, eq2, v) ->
+          let vol_float =  v in
+          mix_solutions_protocol s1 s2 s3 eq1 eq2 vol_float env.solutions p_env.solutions
+       | _ ->  eval_expr expr env in ()) alpha_converted_expr_list;*)
+  | Call_3 (s, args) ->
+     (* Create isolated protocol environment *)
+     let p_env = init_env in
+     let p = retrieve_protocol s env.protocols in
+     let bound_p = bind_params_with_args_in_protocol p args in
+     let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
+
+     (* Execute protocol in isolation, but return original environment *)
+     (match alpha_converted_expr with
+      | Mix (s1, s2, s3, eq1, eq2, v) ->
+         let vol_float = v in
+         let _protocol_result = mix_solutions_protocol s1 s2 s3 eq1 eq2 vol_float env.solutions p_env.solutions in
+         env  (* Return original global environment unchanged *)
+      | _ ->
+         let _result = eval_expr alpha_converted_expr p_env in
+         env)  (* Return original global environment unchanged *)
+     (*let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
+     (match alpha_converted_expr with
+     | Mix (s1, s2, s3, eq1, eq2, v) ->
+        {env with solutions = mix_solutions_protocol s1 s2 s3 eq1 eq2 v env.solutions p_env.solutions}
+        | _ -> eval_expr alpha_converted_expr env)*)
+
 
   (*| Dispense (v) -> print_string "Dispense "; print_string v; print_newline()
     | FindLocation(v) -> print_string "FindLocation "; print_string v; print_newline()*)
@@ -76,3 +115,11 @@ let rec eval_expr (e : expression)(env : env): env =
     let () = print_env env in
     env
   | _ -> env
+
+
+(*let eval_protocol_expr (e:expression) (env:env) (p_env) : env =
+  match e with
+  | Mix (s1, s2, s3, eq1, eq2, v) ->
+     let vol_float =  v in
+     {env with solutions = mix_solutions_protocol s1 s2 s3 eq1 eq2 vol_float env.solutions p_env.solutions}
+  | _ -> eval_expr e env*)

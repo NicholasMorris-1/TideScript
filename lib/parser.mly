@@ -125,4 +125,4 @@ expression:
   | WAIT FOR var = NUMERAL HOURS {Wait(var)}
   | DISPENSE var = ID {Dispense var}
   | PRINT {Print}
-  | CALL var = ID args = argument_list  {Call_2(var, args)}
+  | CALL var = ID args = argument_list  {Call_3(var, args)}

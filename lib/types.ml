@@ -109,6 +109,7 @@ type expression =
   | Print
   | Call of string * arg list
   | Call_2 of string * arg list
+  | Call_3 of string * arg list
 
 and return_type =
   | VoidType

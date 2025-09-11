@@ -129,7 +129,7 @@ let find_solvent_by_name name map =
 
 
 
-let add_solution name solute_list solvent_list map =
+let init_solution name solute_list solvent_list map =
   let key = name in
   let solution : solution = {
     solutes = solute_list;
@@ -139,6 +139,12 @@ let add_solution name solute_list solvent_list map =
     temperature = None;
   } in
   SolutionMap.add key solution map
+
+
+let add_solution key (solution: solution) (map: solution SolutionMap.t) (if_in_protocol: bool) : solution SolutionMap.t =
+  match if_in_protocol with
+    | true -> map
+    | false -> SolutionMap.add key solution map
 
 let find_solution_by_name name map =
   try
@@ -183,6 +189,31 @@ let mix_solutions name sol1 sol2 eq1 eq2 (final_volume: float) (map: solution So
         temperature = None;
       } in
     SolutionMap.add name solution map
+
+let mix_solutions_protocol name sol1 sol2 eq1 eq2 (final_volume: float) (map: solution SolutionMap.t) (p_map : solution SolutionMap.t) =
+  let solution_1 : solution = find_solution_by_name sol1 map in
+  let solution_2 : solution = find_solution_by_name sol2 map in
+  let stoichiometric_ratio = eq1 /. eq2 in
+  let moles_1 = solution_1.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let moles_2 = solution_2.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let volume_1 = (final_volume *. stoichiometric_ratio) /. (stoichiometric_ratio +. 1.0) in
+  let volume_2 = final_volume -. volume_1 in
+  let new_conc_1 = moles_1 /. volume_1 in
+  let new_conc_2 = moles_2 /. volume_2 in
+  let solutes_1 = List.map (fun (solute, _) -> (solute, new_conc_1)) solution_1.solutes in
+  let solutes_2 = List.map (fun (solute, _) -> (solute, new_conc_2)) solution_2.solutes in
+  let solutes = solutes_1 @ solutes_2 in
+  let solvents = solution_1.solvents @ solution_2.solvents in
+  let volume = Some final_volume in
+    let solution : solution  = {
+        solutes;
+        solvents;
+        agitate = false;
+        volume;
+        temperature = None;
+      } in
+    SolutionMap.add name solution p_map
+
 
 
 
@@ -453,14 +484,14 @@ let rec substitute_var (old_var : string) (new_var : string) (expr : expression)
     | Protocol (name, returntype, arglist, e) ->
        let new_e = substitute_var old_var new_var e in
        Protocol (name, returntype, arglist, new_e)
-    | Call (s, args) ->
+    | Call_3 (s, args) ->
        let new_s = if s = old_var then new_var else s in
          let new_args = List.map (function
             | StringArg s when s = old_var -> StringArg new_var
             | FloatArg f when string_of_float f = old_var -> FloatArg (float_of_string new_var)
             | arg -> arg
                           ) args in
-         Call (new_s, new_args)
+         Call_3 (new_s, new_args)
     | Return s ->
        let new_s = if s = old_var then new_var else s in
        Return new_s
@@ -490,6 +521,24 @@ let bind_params (formal_params : arg list) (actual_args : arg list) (expr : expr
     raise (Failure "Argument count does not match parameter count");
   let subst_list = List.combine param_names arg_names in
   substitue_multiple_vars subst_list expr
+
+
+let is_expr_in_protocol expr protocol =
+  let rec aux e =
+    match e with
+    | Sequence (e1, e2) -> aux e1 || aux e2
+    | Protocol (_, _, _, e_inner) -> aux e_inner
+    | _ -> e = expr
+  in
+  aux protocol.expressions
+
+let is_expr_in_any_protocol expr protocols =
+  ProtocolMap.exists (fun _ protocol -> is_expr_in_protocol expr protocol) protocols
+
+
+
+
+
 
 (*let apply_protocol (protocol : protocol) (args : arg list) env : env =
   let bound_protocol = bind_params_with_args_in_protocol protocol args in
