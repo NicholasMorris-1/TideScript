@@ -190,21 +190,25 @@ let mix_solutions name sol1 sol2 eq1 eq2 (final_volume: float) (map: solution So
       } in
     SolutionMap.add name solution map
 
-let mix_solutions_protocol name sol1 sol2 eq1 eq2 (final_volume: float) (map: solution SolutionMap.t) (p_map : solution SolutionMap.t) =
+let mix_solutions_protocol name sol1 sol2 eq1 eq2 (final_volume: volume_type) (map: solution SolutionMap.t) (p_map : solution SolutionMap.t) =
+  let final_vol =
+  match final_volume with
+  | NoVolume -> 0.0
+  | Volume final_volume -> final_volume in
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
   let stoichiometric_ratio = eq1 /. eq2 in
   let moles_1 = solution_1.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
   let moles_2 = solution_2.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
-  let volume_1 = (final_volume *. stoichiometric_ratio) /. (stoichiometric_ratio +. 1.0) in
-  let volume_2 = final_volume -. volume_1 in
+  let volume_1 = (final_vol *. stoichiometric_ratio) /. (stoichiometric_ratio +. 1.0) in
+  let volume_2 = final_vol -. volume_1 in
   let new_conc_1 = moles_1 /. volume_1 in
   let new_conc_2 = moles_2 /. volume_2 in
   let solutes_1 = List.map (fun (solute, _) -> (solute, new_conc_1)) solution_1.solutes in
   let solutes_2 = List.map (fun (solute, _) -> (solute, new_conc_2)) solution_2.solutes in
   let solutes = solutes_1 @ solutes_2 in
   let solvents = solution_1.solvents @ solution_2.solvents in
-  let volume = Some final_volume in
+  let volume = Some final_vol in
     let solution : solution  = {
         solutes;
         solvents;
@@ -316,8 +320,14 @@ let find_solute_by_name name map =
   | Not_found -> raise Not_found
 
 
-let return_solution solution =
-  print_endline solution
+let return_solution name global_map protocol_map =
+  let solution = find_solution_by_name name protocol_map in
+  let key = name in
+  SolutionMap.add key solution global_map
+
+
+
+
 
 
 let create_empty_env () = {
@@ -463,14 +473,17 @@ let rec substitute_var (old_var : string) (new_var : string) (expr : expression)
         let new_s2 = if s2 = old_var then new_var else s2 in
         let new_s3 = if s3 = old_var then new_var else s3 in
         Combine (new_s1, new_s2, new_s3)
-    | Mix (s1, s2, s3, eq1, eq2, v) ->
+    | Mix (s1, s2, s3, eq1, eq2, vol) ->
         let new_s1 = if s1 = old_var then new_var else s1 in
         let new_s2 = if s2 = old_var then new_var else s2 in
         let new_s3 = if s3 = old_var then new_var else s3 in
         let new_eq1 = if string_of_float eq1 = old_var then float_of_string new_var else eq1 in
         let new_eq2 = if string_of_float eq2 = old_var then float_of_string new_var  else  eq2 in
-        let new_v = if string_of_float v = old_var then float_of_string new_var else v in
-        Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, new_v)
+        (match vol with
+        | NoVolume -> Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, NoVolume)
+        | Volume v ->
+        let new_v = if string_of_float v = old_var then Volume (float_of_string new_var) else Volume v in
+        Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, new_v))
     | Agitate s ->
         let new_s = if s = old_var then new_var else s in
         Agitate new_s
@@ -484,14 +497,14 @@ let rec substitute_var (old_var : string) (new_var : string) (expr : expression)
     | Protocol (name, returntype, arglist, e) ->
        let new_e = substitute_var old_var new_var e in
        Protocol (name, returntype, arglist, new_e)
-    | Call_3 (s, args) ->
+    | Call_void (s, args) ->
        let new_s = if s = old_var then new_var else s in
          let new_args = List.map (function
             | StringArg s when s = old_var -> StringArg new_var
             | FloatArg f when string_of_float f = old_var -> FloatArg (float_of_string new_var)
             | arg -> arg
                           ) args in
-         Call_3 (new_s, new_args)
+         Call_void (new_s, new_args)
     | Return s ->
        let new_s = if s = old_var then new_var else s in
        Return new_s
@@ -521,6 +534,12 @@ let bind_params (formal_params : arg list) (actual_args : arg list) (expr : expr
     raise (Failure "Argument count does not match parameter count");
   let subst_list = List.combine param_names arg_names in
   substitue_multiple_vars subst_list expr
+
+let create_alpha_converted_expr s args env =
+    let p = retrieve_protocol s env.protocols in
+    let bound_p = bind_params_with_args_in_protocol p args in
+    let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
+    alpha_converted_expr
 
 
 let is_expr_in_protocol expr protocol =
@@ -616,8 +635,22 @@ let print_solutions map =
     print_solution v
   ) map
 
+
+let print_protocol protocol =
+  Printf.printf "Protocol Name: %s\n" protocol.name;
+  print_endline "Arguments:";
+  List.iter (fun arg ->
+      match arg with
+      | StringArg s -> Printf.printf "StringArg: %s\n" s
+      | FloatArg f -> Printf.printf "FloatArg: %f\n" f
+    ) protocol.arglist;
+  print_endline "Return Solution:";
+  (match protocol.returnSolution with
+   | Some sol -> print_solution sol
+   | None -> print_endline "None")
+
 let print_protocols map =
-  ProtocolMap.iter (fun k _v -> print_endline k) map
+  ProtocolMap.iter (fun _k v -> print_protocol v) map
 
 let print_solvents map =
   SolventMap.iter (fun k _v -> print_endline k) map

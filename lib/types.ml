@@ -83,9 +83,9 @@ let rec arglist_to_lst (args: arglist) =
   | EmptyArglist -> []
   | Arglist(s,l) -> s :: (arglist_to_lst l)
 
-(*type volume_type =
+type volume_type =
   | Volume of float
-  | NoVolume*)
+  | NoVolume
 
 type expression =
   | Sequence of expression * expression
@@ -101,7 +101,7 @@ type expression =
   | FindLocation of string
   | Combine of string * string * string
   | ChangeTemp of string * float
-  | Mix of string * string * string * float * float * float
+  | Mix of string * string * string * float * float * volume_type
   | Agitate of string
   | Return of string
   | Deagitate of string
@@ -109,7 +109,8 @@ type expression =
   | Print
   | Call of string * arg list
   | Call_2 of string * arg list
-  | Call_3 of string * arg list
+  | Call_void of string * arg list
+  | Call_solution of string * string *  arg list
 
 and return_type =
   | VoidType

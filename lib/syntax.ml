@@ -1,13 +1,6 @@
 open Types
 open Functions
 
-(*let rec create_solute_list sollist =
-  match sollist with
-  | EmptySollist -> []
-  | Sollist (s, t, rest) ->
-    match s with
-    | Peptide (s) -> (find_solute_by_name s, t)::(create_solute_list rest)
-    | Molecule (s) ->((find_solute_by_name s), t)::(create_solute_list rest)*)
 
 let rec create_solute_list sollist solute_map =
   match sollist with
@@ -21,10 +14,6 @@ let rec create_solvent_list solvnlist map =
   | EmptySolvnlist -> []
   | Solvnlist (s, rest) -> (find_solvent_by_name s map )::(create_solvent_list rest map)
 
-(*let volume_to_float voltype  =
-    match voltype with
-  | Volume f -> f
-  | NoVolume -> 1.0  (* Default volume if none specified *)*)
 
 let init_env = {
   solutes = SoluteMap.empty;
@@ -47,7 +36,9 @@ let rec eval_expr (e : expression)(env : env): env =
     {env with solutions = init_solution var solute_list solvent_list env.solutions})
   | Combine (s1, s2, s3) -> {env with solutions = combine_solutions s1 s2 s3 env.solutions}
   | Mix (s1, s2, s3, eq1, eq2, v) ->
-     let vol_float =  v in
+     let vol_float = match v with
+       | Volume x -> x
+       | NoVolume -> 0.0 in
     {env with solutions = mix_solutions s1 s2 s3 eq1 eq2 vol_float env.solutions}
   | Agitate (s) -> {env with solutions = agitate_solution s env.solutions}
   | Return (s) -> {env with solutions = agitate_solution s env.solutions}
@@ -85,22 +76,42 @@ let rec eval_expr (e : expression)(env : env): env =
           let vol_float =  v in
           mix_solutions_protocol s1 s2 s3 eq1 eq2 vol_float env.solutions p_env.solutions
        | _ ->  eval_expr expr env in ()) alpha_converted_expr_list;*)
-  | Call_3 (s, args) ->
-     (* Create isolated protocol environment *)
+  | Call_void (s, args) ->
      let p_env = init_env in
      let p = retrieve_protocol s env.protocols in
+     (if p.returntype <> VoidType then
+        raise (Failure ("Protocol " ^ s ^ " does not have return type Void, but called with Call_void"))
+      else ());
      let bound_p = bind_params_with_args_in_protocol p args in
      let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
-
-     (* Execute protocol in isolation, but return original environment *)
      (match alpha_converted_expr with
       | Mix (s1, s2, s3, eq1, eq2, v) ->
-         let vol_float = v in
-         let _protocol_result = mix_solutions_protocol s1 s2 s3 eq1 eq2 vol_float env.solutions p_env.solutions in
-         env  (* Return original global environment unchanged *)
+         let _protocol_result = mix_solutions_protocol s1 s2 s3 eq1 eq2 v env.solutions p_env.solutions in
+         env
       | _ ->
          let _result = eval_expr alpha_converted_expr p_env in
-         env)  (* Return original global environment unchanged *)
+         env)
+  | Call_solution (_s_1, s_2, args) ->
+     let p_env = init_env in
+     let p = retrieve_protocol s_2 env.protocols in
+        (if p.returntype <> SolutionType then
+            raise (Failure ("Protocol " ^ s_2 ^ " does not have return type Solution, but called with Call_solution"))
+        else ());
+     let bound_p = bind_params_with_args_in_protocol p args in
+     let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
+     (match alpha_converted_expr with
+      | Mix (s1, s2, s3, eq1, eq2, v) ->
+         let _protocol_result = mix_solutions_protocol s1 s2 s3 eq1 eq2 v env.solutions p_env.solutions in
+         env
+
+      | Return var_name ->
+         let solution = find_solution_by_name var_name p_env.solutions in
+         let _p_2 = {p with returnSolution = Some solution} in
+         {env with solutions = SolutionMap.add _s_1 solution env.solutions}
+      | _ ->
+         let _result = eval_expr alpha_converted_expr p_env in
+         env)
+  (* Return original global environment unchanged *)
      (*let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
      (match alpha_converted_expr with
      | Mix (s1, s2, s3, eq1, eq2, v) ->
