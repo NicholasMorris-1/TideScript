@@ -119,13 +119,7 @@ and return_type =
 
 
 
-type protocol ={
-  name : string;
-  arglist : arg list;
-  expressions: expression;
-  returntype: return_type;
-  returnSolution : solution option;
-}
+
 
 
  (*A map to keep track of peptide variables declared in scope*)
@@ -157,6 +151,15 @@ module SolutionKey =
 module SolutionMap = Map.Make(SolutionKey)
 
 (*maps to keep track of user protocols*)
+
+type protocol ={
+  name : string;
+  arglist : arg list;
+  expressions: expression;
+  solutions: solution SolutionMap.t;
+  returntype: return_type;
+  returnSolution : solution option;
+}
 
 module ProtocolKey =
   struct

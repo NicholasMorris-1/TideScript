@@ -219,6 +219,34 @@ let mix_solutions_protocol name sol1 sol2 eq1 eq2 (final_volume: volume_type) (m
     SolutionMap.add name solution p_map
 
 
+let mix_solutions_protocol_return_solution sol1 sol2 eq1 eq2 (final_volume: volume_type) (map: solution SolutionMap.t) =
+  let final_vol =
+  match final_volume with
+  | NoVolume -> 0.0
+  | Volume final_volume -> final_volume in
+  let solution_1 : solution = find_solution_by_name sol1 map in
+  let solution_2 : solution = find_solution_by_name sol2 map in
+  let stoichiometric_ratio = eq1 /. eq2 in
+  let moles_1 = solution_1.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let moles_2 = solution_2.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let volume_1 = (final_vol *. stoichiometric_ratio) /. (stoichiometric_ratio +. 1.0) in
+  let volume_2 = final_vol -. volume_1 in
+  let new_conc_1 = moles_1 /. volume_1 in
+  let new_conc_2 = moles_2 /. volume_2 in
+  let solutes_1 = List.map (fun (solute, _) -> (solute, new_conc_1)) solution_1.solutes in
+  let solutes_2 = List.map (fun (solute, _) -> (solute, new_conc_2)) solution_2.solutes in
+  let solutes = solutes_1 @ solutes_2 in
+  let solvents = solution_1.solvents @ solution_2.solvents in
+  let volume = Some final_vol in
+    let solution : solution  = {
+        solutes;
+        solvents;
+        agitate = false;
+        volume;
+        temperature = None;
+      } in
+    solution
+
 
 
 
@@ -342,15 +370,19 @@ let create_protocol name returntype (arglist: arg list) expressions  =
   let name = name in
   let arglist = arglist in
   let expressions = expressions in
+  let solutions = SolutionMap.empty in
   let returntype = returntype in
   let returnSolution = None in
   {
     name;
     arglist;
     expressions;
+    solutions;
     returntype;
     returnSolution;
   }
+
+
 
 let add_protocol protocol map =
   let key = protocol.name in

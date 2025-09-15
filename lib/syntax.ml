@@ -91,7 +91,7 @@ let rec eval_expr (e : expression)(env : env): env =
       | _ ->
          let _result = eval_expr alpha_converted_expr p_env in
          env)
-  | Call_solution (_s_1, s_2, args) ->
+  | Call_solution (s_1, s_2, args) ->
      let p_env = init_env in
      let p = retrieve_protocol s_2 env.protocols in
         (if p.returntype <> SolutionType then
@@ -100,14 +100,15 @@ let rec eval_expr (e : expression)(env : env): env =
      let bound_p = bind_params_with_args_in_protocol p args in
      let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
      (match alpha_converted_expr with
-      | Mix (s1, s2, s3, eq1, eq2, v) ->
-         let _protocol_result = mix_solutions_protocol s1 s2 s3 eq1 eq2 v env.solutions p_env.solutions in
-         env
+      | Mix (_s1, s2, s3, eq1, eq2, v) ->
+         let new_solution = mix_solutions_protocol_return_solution s2 s3 eq1 eq2 v env.solutions in
+         let new_p = {p with solutions = SolutionMap.add s2 new_solution p.solutions} in
+         {env with protocols = ProtocolMap.add s2 new_p env.protocols}
 
       | Return var_name ->
          let solution = find_solution_by_name var_name p_env.solutions in
          let _p_2 = {p with returnSolution = Some solution} in
-         {env with solutions = SolutionMap.add _s_1 solution env.solutions}
+         {env with solutions = SolutionMap.add s_1 solution env.solutions}
       | _ ->
          let _result = eval_expr alpha_converted_expr p_env in
          env)
