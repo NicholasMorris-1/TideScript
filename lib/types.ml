@@ -111,6 +111,7 @@ type expression =
   | Call_2 of string * arg list
   | Call_void of string * arg list
   | Call_solution of string * string *  arg list
+  | Call_solution_2 of string * string * arg list
 
 and return_type =
   | VoidType

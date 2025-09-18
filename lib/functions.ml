@@ -247,6 +247,29 @@ let mix_solutions_protocol_return_solution sol1 sol2 eq1 eq2 (final_volume: volu
       } in
     solution
 
+let mix_solutions_return_solution sol1 sol2 eq1 eq2 (final_volume: float) (map: solution SolutionMap.t) =
+  let solution_1 : solution = find_solution_by_name sol1 map in
+  let solution_2 : solution = find_solution_by_name sol2 map in
+  let stoichiometric_ratio = eq1 /. eq2 in
+  let moles_1 = solution_1.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let moles_2 = solution_2.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
+  let volume_1 = (final_volume *. stoichiometric_ratio) /. (stoichiometric_ratio +. 1.0) in
+  let volume_2 = final_volume -. volume_1 in
+  let new_conc_1 = moles_1 /. volume_1 in
+  let new_conc_2 = moles_2 /. volume_2 in
+  let solutes_1 = List.map (fun (solute, _) -> (solute, new_conc_1)) solution_1.solutes in
+  let solutes_2 = List.map (fun (solute, _) -> (solute, new_conc_2)) solution_2.solutes in
+  let solutes = solutes_1 @ solutes_2 in
+  let solvents = solution_1.solvents @ solution_2.solvents in
+  let volume = Some final_volume in
+    let solution : solution  = {
+        solutes;
+        solvents;
+        agitate = false;
+        volume;
+        temperature = None;
+      } in
+  solution
 
 
 
@@ -687,8 +710,11 @@ let print_protocols map =
 let print_solvents map =
   SolventMap.iter (fun k _v -> print_endline k) map
 
-let print_env env =
+let print_env env (solution: solution option) =
   print_endline "SOLUTES:";
+  (match solution with
+  | None -> print_endline "None"
+  | Some _s -> print_endline "Some");
   print_solutes env.solutes;
   print_newline ();
   print_endline "SOLUTIONS:";
