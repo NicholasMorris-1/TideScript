@@ -23,7 +23,7 @@ let find_average_mass_by_one_letter_code c amino_acid_list =
 
 
 
-(*Same as above but for the monoisotopic mass*)
+(*Same as above bu't for the monoisotopic mass*)
 
 
 let find_monoisotopic_mass_by_one_letter_code  c amino_acid_list =
@@ -141,10 +141,6 @@ let init_solution name solute_list solvent_list map =
   SolutionMap.add key solution map
 
 
-let add_solution key (solution: solution) (map: solution SolutionMap.t) (if_in_protocol: bool) : solution SolutionMap.t =
-  match if_in_protocol with
-    | true -> map
-    | false -> SolutionMap.add key solution map
 
 let find_solution_by_name name map =
   try
@@ -359,6 +355,9 @@ let does_protocol_have_return protocol =
 
    (*This function adds user declared molecules to map*)
 
+
+
+
 let add_molecule name formula map =
   let key = name in
   let molecule =
@@ -367,7 +366,7 @@ let add_molecule name formula map =
       name;
       average_mass = 0.0;
       monoisotopic_mass = 0.0;
-      formula ;
+      formula;
       smiles = "";
     }
     in
@@ -528,6 +527,16 @@ let string_of_vol_unit volunit =
   | Milliliters -> "mL"
   | VolumeUnitParam s -> s
   (*| Microliters -> "uL"*)
+
+let convert_mgML_to_mm (conc: float) (solute: solute) : float =
+  let molecular_weight =
+    match solute with
+    | Peptide p -> p.average_mass
+    | Molecule m -> m.average_mass in
+  conc /. molecular_weight
+
+
+
 
 let rec substitute_var (old_var : string) (new_var : string) (expr : expression) : expression =
   match expr with

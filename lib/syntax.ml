@@ -5,9 +5,13 @@ open Functions
 let rec create_solute_list sollist solute_map =
   match sollist with
   | EmptySollist -> []
-  | Sollist (s, t, rest) ->
+  | Sollist (s, t, cu, rest) ->
     let solute = find_solute_by_name s solute_map in
-    (solute, t) :: (create_solute_list rest solute_map)
+    let conc = match cu with
+      | Millimolar -> t
+      | MgPerMl -> convert_mgML_to_mm t solute
+      | ConcUnitParam _ -> t in  (* This should not happen after substitution *)
+    (solute, conc) :: (create_solute_list rest solute_map)
 
 let rec create_solvent_list solvnlist map =
   match solvnlist with

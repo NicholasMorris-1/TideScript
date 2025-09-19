@@ -76,6 +76,9 @@ argument:
   | x = FLOAT {FloatArg(x)}
   | ML {StringArg("mL")}
   | L {StringArg("L")}
+  | MM {StringArg("mM")}
+  | MGML {StringArg("mg/mL")}
+
 
 argument_list:
   | arg = argument rest = argument_list {arg :: rest}
@@ -87,7 +90,7 @@ argument_list:
 //  |  { EmptyArglist }
 
 sollist:
-  |   var = ID LPAREN conc = FLOAT MM RPAREN  rest = sollist {Sollist(var, conc, rest)}
+  |   var = ID LPAREN conc = FLOAT cu = conc_unit RPAREN  rest = sollist {Sollist(var, conc, cu, rest)}
   |  { EmptySollist }
 
 solvnlist:
@@ -103,6 +106,10 @@ solution_construction:
     { fun var -> Mix (var, var2, var3, eq1, eq2, vol, unit) }
   | CALL var2 = ID args = argument_list {fun var -> Call_solution_2(var, var2, args) }
 
+conc_unit:
+  | MM { Millimolar }
+  | MGML { MgPerMl }
+  | id = ID { ConcUnitParam id }
 
 return_type:
   | VOID { VoidType }

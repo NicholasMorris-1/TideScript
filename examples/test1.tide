@@ -10,7 +10,7 @@ solvent dmf;
 
 #init solutions by passing in materials
 solution sol_x = [pep_a(2.0 mM)] in [dmf];
-solution sol_y = [mol_b(2.87 mM)] in [dmf];
+solution sol_y = [mol_b(2.87 mgML)] in [dmf];
 
 protocol <solution> conjugate (pep_sol mol_sol volume unit){
     solution new_solution = mix pep_sol (1.0 eq) + mol_sol (3.0 eq) at volume unit;

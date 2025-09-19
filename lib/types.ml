@@ -70,9 +70,14 @@ type arglist =
  | EmptyArglist
  | Arglist of arg * arglist
 
+type conc_unit =
+  | Millimolar
+  | MgPerMl
+  | ConcUnitParam of string
+
 type sollist =
   | EmptySollist
-  | Sollist of string * float * sollist
+  | Sollist of string * float * conc_unit * sollist
 
 type solvnlist =
   | EmptySolvnlist
