@@ -18,6 +18,7 @@ rule token = parse
   | "solution"      {SOLUTION}
   | "in"            {IN}
   | "mM"            {MM}
+  | "mgML"          {MGML}
   | "C"             {C}
   | "mL"            {ML}
   | "L"             {L}
@@ -55,7 +56,7 @@ rule token = parse
   | "}"             { RBRACE}
   | "["             {LBRAC}
   | "]"             {RBRAC}
-  | ['a'-'z']*     { ID (Lexing.lexeme lexbuf) }
+  | ['a'-'z' '_']*     { ID (Lexing.lexeme lexbuf) }
   | ['A'- 'Z']*     { PEPID (Lexing.lexeme lexbuf) }
   | ['a'-'z' 'A'-'Z' '0'-'9']*   { MOLID (Lexing.lexeme lexbuf) }
   | eof             { EOF }

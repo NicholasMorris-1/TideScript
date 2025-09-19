@@ -1,23 +1,27 @@
 #declare peptide
-peptide pepa = <SADCLKSCLRMCPDRIIL>;
+peptide pep_a = <SADCLKSCLRMCPDRIIL>;
 
 
 #declare molecule
-molecule molb = (C14H31N7O8S);
+molecule mol_b = (C14H31N7O8S);
 
 #declare solvents
 solvent dmf;
 
 #init solutions by passing in materials
-solution solx = [pepa(2.0 mM)] in [dmf];
-solution soly = [molb(2.87 mM)] in [dmf];
+solution sol_x = [pep_a(2.0 mM)] in [dmf];
+solution sol_y = [mol_b(2.87 mM)] in [dmf];
 
-protocol <solution> conjugate (pepsol molsol volume unit){
-    solution newsolution = mix pepsol (1.0 eq) + molsol (3.0 eq) at volume unit;
-    #changeTemp newsolution to 21.0 C;
-    agitate newsolution;
+protocol <solution> conjugate (pep_sol mol_sol volume unit){
+    solution new_solution = mix pep_sol (1.0 eq) + mol_sol (3.0 eq) at volume unit;
+    changeTemp new_solution to 21.0 C;
+    agitate new_solution;
     wait for 3 hours;
-    return newsolution
+    return new_solution
 };
 
-solution sola = call conjugate solx soly 1.0 mL
+solution sola = call conjugate sol_x sol_y 1.0 mL;
+
+solution solb = call conjugate sol_x sol_y 100.0 mL;
+
+solution sol_c = call conjugate sol_x sol_y 1.0 L

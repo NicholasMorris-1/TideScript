@@ -33,6 +33,7 @@
 %token HOURS
 %token EQ
 %token MM
+%token MGML
 %token C
 %token ML
 %token L
