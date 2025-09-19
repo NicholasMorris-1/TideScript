@@ -20,6 +20,7 @@ rule token = parse
   | "mM"            {MM}
   | "C"             {C}
   | "mL"            {ML}
+  | "L"             {L}
   | "eq"            {EQ}
   | "calculate_average_mass"  {CALCULATE_AVERAGE_MASS}
   | "generate_smiles"      {GENERATE_SMILES}

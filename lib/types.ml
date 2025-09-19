@@ -88,6 +88,15 @@ type volume_type =
   | VolumeParam of string
   | NoVolume
 
+type volume_unit =
+  | Liters
+  | Milliliters
+  | VolumeUnitParam of string
+  (*| Microliters*)
+
+
+
+
 type expression =
   | Sequence of expression * expression
   | Addpeptide of string * string
@@ -102,7 +111,7 @@ type expression =
   | FindLocation of string
   | Combine of string * string * string
   | ChangeTemp of string * float
-  | Mix of string * string * string * float * float * volume_type
+  | Mix of string * string * string * float * float * volume_type * volume_unit
   | Agitate of string
   | Return of string
   | Deagitate of string

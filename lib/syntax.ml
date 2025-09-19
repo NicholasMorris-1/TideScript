@@ -23,6 +23,7 @@ let init_env = {
 }
 
 
+
 let shallow_copy_env (env : env) : env =
   {
     solutes = env.solutes;
@@ -48,13 +49,14 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   ({env with solutions = init_solution var solute_list solvent_list env.solutions}, None)
       | Combine (s1, s2, s3) ->
                   ({env with solutions = combine_solutions s1 s2 s3 env.solutions}, None)
-      | Mix (s1, s2, s3, eq1, eq2, v) ->
+      | Mix (s1, s2, s3, eq1, eq2, v, u) ->
                   let vol_float = match v with
                         | Volume x -> x
                         | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
                         | NoVolume -> 10.0 in
-                  let solution = mix_solutions_return_solution s2 s3 eq1 eq2 vol_float env.solutions in
+                  let solution = mix_solutions_return_solution_with_unit s2 s3 eq1 eq2 vol_float env.solutions u in
                   ({env with solutions = SolutionMap.add s1 solution env.solutions}, None)
+
       | Agitate (s) ->
                   ({env with solutions = agitate_solution s env.solutions}, None)
       | Return (s) ->
@@ -93,37 +95,18 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   let bound_p = bind_params_with_args_in_protocol p args in
                   let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
                   (match alpha_converted_expr with
-                  | Mix (s1, s2, s3, eq1, eq2, v) ->
-                              let _protocol_result = mix_solutions_protocol s1 s2 s3 eq1 eq2 v env.solutions p_env.solutions in
-                              (env, None)
+                  | Mix (s1, s2, s3, eq1, eq2, v, u) ->
+                              let vol_float = match v with
+                                    | Volume x -> x
+                                    | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
+                                    | NoVolume -> 10.0 in
+                              let solution_result = mix_solutions_return_solution_with_unit s2 s3 eq1 eq2 vol_float env.solutions u in
+                              ({env with solutions = SolutionMap.add s1 solution_result env.solutions}
+                                                   , None)
                   | _ ->
                               let _, _ = eval_expr alpha_converted_expr p_env in
                               (env, None))
-      | Call_solution (s_1, s_2, args) ->
-                  let p_env = shallow_copy_env env in
-                  let p = retrieve_protocol s_2 env.protocols in
-                  (if p.returntype <> SolutionType then
-                              raise (Failure ("Protocol " ^ s_2 ^ " does not have return Solution"))
-                  else ());
-                  let bound_p = bind_params_with_args_in_protocol p args in
-                  let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
-                  let _p_env', sol_opt =
-                    match alpha_converted_expr with
-                    | Mix (_s1, s2, s3, eq1, eq2, v) ->
-                              let new_solution = mix_solutions_protocol_return_solution s2 s3 eq1 eq2 v p_env.solutions in
-                              let new_p = {p with solutions = SolutionMap.add s2 new_solution p.solutions} in
-                              ({p_env with protocols = ProtocolMap.add s2 new_p p_env.protocols}, Some new_solution)
-                    | Return var_name ->
-                              let solution = find_solution_by_name var_name p_env.solutions in
-                              let _p_2 = {p with returnSolution = Some solution} in
-                              (p_env, Some solution)
-                    | _ ->
-                              eval_expr alpha_converted_expr p_env
-                  in
-                  (match sol_opt with
-                   | Some solution ->
-                          ({env with solutions = SolutionMap.add s_1 solution env.solutions}, Some solution)
-                   | None -> (env, None))
+
       | Call_solution_2 (s_1, s_2, args) ->
             let env' = shallow_copy_env env in
             let p = retrieve_protocol s_2 env'.protocols in
@@ -148,7 +131,7 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
 
 (*let eval_protocol_expr (e:expression) (env:env) (p_env) : env =
   match e with
-  | Mix (s1, s2, s3, eq1, eq2, v) ->
+  | Mix (s1, s2, s3, eq1, eq2, v, u) ->
      let vol_float =  v in
      {env with solutions = mix_solutions_protocol s1 s2 s3 eq1 eq2 vol_float env.solutions p_env.solutions}
   | _ -> eval_expr e env*)

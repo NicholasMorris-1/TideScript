@@ -35,6 +35,7 @@
 %token MM
 %token C
 %token ML
+%token L
 %token CALCULATE_AVERAGE_MASS
 %token GENERATE_SMILES
 %token PRINT
@@ -72,6 +73,8 @@ toplevel: e = expression EOF
 argument:
   | v = ID {StringArg(v)}
   | x = FLOAT {FloatArg(x)}
+  | ML {StringArg("mL")}
+  | L {StringArg("L")}
 
 argument_list:
   | arg = argument rest = argument_list {arg :: rest}
@@ -95,8 +98,8 @@ solution_construction:
       { fun var -> Solution (var, args1, args2) }
   | COMBINE var2 = ID AND var3 = ID
     { fun var -> Combine (var, var2, var3) }
-  | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = volume_type  ML
-    { fun var -> Mix (var, var2, var3, eq1, eq2, vol) }
+  | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = volume_type unit = volume_unit
+    { fun var -> Mix (var, var2, var3, eq1, eq2, vol, unit) }
   | CALL var2 = ID args = argument_list {fun var -> Call_solution_2(var, var2, args) }
 
 
@@ -107,6 +110,11 @@ return_type:
 volume_type:
   | v = FLOAT { Volume v }
   | id = ID { VolumeParam id }
+
+volume_unit:
+  | ML { Milliliters }
+  | L { Liters }
+  | id = ID { VolumeUnitParam id }
 
 
 

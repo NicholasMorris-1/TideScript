@@ -1,0 +1,4 @@
+protocol <solution> test (vol unit){
+    solution result = mix sol1 (1.0 eq) + sol2 (1.0 eq) at vol unit;
+    return result
+};

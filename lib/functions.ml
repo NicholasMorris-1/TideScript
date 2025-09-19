@@ -276,6 +276,17 @@ let mix_solutions_return_solution sol1 sol2 eq1 eq2 (final_volume: float) (map: 
   solution
 
 
+let mix_solutions_return_solution_with_unit sol1 sol2 eq1 eq2 (final_volume: float) (map: solution SolutionMap.t) (volunit: volume_unit) =
+  let final_volume_in_ml =
+    match volunit with
+    | Liters -> final_volume *. 1000.0
+    | Milliliters -> final_volume
+    | _ -> final_volume  (* This should not happen after substitution *)
+     in
+  mix_solutions_return_solution sol1 sol2 eq1 eq2 final_volume_in_ml map
+
+
+
 
 
 
@@ -459,7 +470,7 @@ let rec free_vars (expr : expression) : string list =
   | Solvent s -> [s]
   | Solution (var, _, _) -> [var]
   | Combine (s1, s2, s3) -> [s1; s2; s3]
-  | Mix (s1, s2, s3, _, _, _) -> [s1; s2; s3]
+  | Mix (s1, s2, s3, _, _, _,_) -> [s1; s2; s3]
   | Agitate s -> [s]
   | Deagitate s -> [s]
   | ChangeTemp (s, _) -> [s]
@@ -511,84 +522,97 @@ let rec alpha_convert (avoid_vars : string list) (expr : expression) : expressio
   | _ -> expr
 
 
-let rec substitute_var (old_var : string) (new_var : string) (expr : expression) : expression =
-    match expr with
-    | Sequence (e1, e2) ->
-        let new_e1 = substitute_var old_var new_var e1 in
-        let new_e2 = substitute_var old_var new_var e2 in
-        Sequence (new_e1, new_e2)
-    | Addpeptide (s, t) ->
-        let new_s = if s = old_var then new_var else s in
-        Addpeptide (new_s, t)
-    | Addmolecule (s, t) ->
-        let new_s = if s = old_var then new_var else s in
-        Addmolecule (new_s, t)
-    | Solvent s ->
-        let new_s = if s = old_var then new_var else s in
-        Solvent new_s
-    | Solution (var, args1, args2) ->
-        let new_var = if var = old_var then new_var else var in
-        Solution (new_var, args1, args2)
-    | Combine (s1, s2, s3) ->
-        let new_s1 = if s1 = old_var then new_var else s1 in
-        let new_s2 = if s2 = old_var then new_var else s2 in
-        let new_s3 = if s3 = old_var then new_var else s3 in
-        Combine (new_s1, new_s2, new_s3)
-    | Mix (s1, s2, s3, eq1, eq2, vol) ->
-        let new_s1 = if s1 = old_var then new_var else s1 in
-        let new_s2 = if s2 = old_var then new_var else s2 in
-        let new_s3 = if s3 = old_var then new_var else s3 in
-        let new_eq1 = if string_of_float eq1 = old_var then float_of_string new_var else eq1 in
-        let new_eq2 = if string_of_float eq2 = old_var then float_of_string new_var  else  eq2 in
-        let new_vol = 
-          match vol with
-          | NoVolume -> NoVolume
-          | Volume v ->
-              (* Handle volume substitution for float values *)
-              if string_of_float v = old_var then 
-                Volume (float_of_string new_var) 
-              else 
-                Volume v
-          | VolumeParam param_name ->
-              (* Handle volume parameter substitution *)
-              if param_name = old_var then
-                (try Volume (float_of_string new_var) with _ -> VolumeParam new_var)
-              else
-                VolumeParam param_name
-        in
-        Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, new_vol)
-    | Agitate s ->
-        let new_s = if s = old_var then new_var else s in
-        Agitate new_s
-    | Deagitate s ->
-        let new_s = if s = old_var then new_var else s in
-        Deagitate new_s
-    | ChangeTemp (s, t) ->
-       let new_s = if s = old_var then new_var else s in
-       ChangeTemp (new_s, t)
-    | Wait x -> Wait x
-    | Protocol (name, returntype, arglist, e) ->
-       let new_e = substitute_var old_var new_var e in
-       Protocol (name, returntype, arglist, new_e)
-    | Call_void (s, args) ->
-       let new_s = if s = old_var then new_var else s in
-         let new_args = List.map (function
-            | StringArg s when s = old_var -> StringArg new_var
-            | FloatArg f when string_of_float f = old_var -> FloatArg (float_of_string new_var)
-            | arg -> arg
-                          ) args in
-         Call_void (new_s, new_args)
-    | Return s ->
-       let new_s = if s = old_var then new_var else s in
-       Return new_s
-    | Print -> Print
-    | _ -> expr
-                 (*| Dispense v -> let new_v = if v = old_var then new_var
-                                else v in Dispense new_v
-                   | FindLocation v -> let new_v = if v = old_var then new_var
-                                        else v in FindLocation new_v*)
+let string_of_vol_unit volunit =
+  match volunit with
+  | Liters -> "L"
+  | Milliliters -> "mL"
+  | VolumeUnitParam s -> s
+  (*| Microliters -> "uL"*)
 
-let substitue_multiple_vars (subst_list : (string * string) list) (expr : expression) : expression =
+let rec substitute_var (old_var : string) (new_var : string) (expr : expression) : expression =
+  match expr with
+  | Sequence (e1, e2) ->
+      let new_e1 = substitute_var old_var new_var e1 in
+      let new_e2 = substitute_var old_var new_var e2 in
+      Sequence (new_e1, new_e2)
+  | Addpeptide (s, t) ->
+      let new_s = if s = old_var then new_var else s in
+      Addpeptide (new_s, t)
+  | Addmolecule (s, t) ->
+      let new_s = if s = old_var then new_var else s in
+      Addmolecule (new_s, t)
+  | Solvent s ->
+      let new_s = if s = old_var then new_var else s in
+      Solvent new_s
+  | Solution (var, args1, args2) ->
+      let new_var = if var = old_var then new_var else var in
+      Solution (new_var, args1, args2)
+  | Combine (s1, s2, s3) ->
+      let new_s1 = if s1 = old_var then new_var else s1 in
+      let new_s2 = if s2 = old_var then new_var else s2 in
+      let new_s3 = if s3 = old_var then new_var else s3 in
+      Combine (new_s1, new_s2, new_s3)
+  | Mix (s1, s2, s3, eq1, eq2, vol, vol_unit) ->
+      let new_s1 = if s1 = old_var then new_var else s1 in
+      let new_s2 = if s2 = old_var then new_var else s2 in
+      let new_s3 = if s3 = old_var then new_var else s3 in
+      let new_eq1 = if string_of_float eq1 = old_var then float_of_string new_var else eq1 in
+      let new_eq2 = if string_of_float eq2 = old_var then float_of_string new_var  else  eq2 in
+      let new_vol = 
+        match vol with
+        | NoVolume -> NoVolume
+        | Volume v ->
+            if string_of_float v = old_var then 
+              Volume (float_of_string new_var) 
+            else 
+              Volume v
+        | VolumeParam param_name ->
+            if param_name = old_var then
+              (try Volume (float_of_string new_var) with _ -> VolumeParam new_var)
+            else
+              VolumeParam param_name
+      in
+      let new_volunit =
+        match vol_unit with
+        | VolumeUnitParam param_name ->
+            if param_name = old_var then
+              (* Convert string to actual unit type *)
+              (match new_var with
+              | "L" -> Liters
+              | "mL" | "ML" -> Milliliters
+              | _ -> VolumeUnitParam new_var)
+            else VolumeUnitParam param_name
+        | Liters | Milliliters as unit -> unit
+      in
+      Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, new_vol, new_volunit)
+  | Agitate s ->
+      let new_s = if s = old_var then new_var else s in
+      Agitate new_s
+  | Deagitate s ->
+      let new_s = if s = old_var then new_var else s in
+      Deagitate new_s
+  | ChangeTemp (s, t) ->
+     let new_s = if s = old_var then new_var else s in
+     ChangeTemp (new_s, t)
+  | Wait x -> Wait x
+  | Protocol (name, returntype, arglist, e) ->
+     let new_e = substitute_var old_var new_var e in
+     Protocol (name, returntype, arglist, new_e)
+  | Call_void (s, args) ->
+     let new_s = if s = old_var then new_var else s in
+       let new_args = List.map (function
+          | StringArg s when s = old_var -> StringArg new_var
+          | FloatArg f when string_of_float f = old_var -> FloatArg (float_of_string new_var)
+          | arg -> arg
+                        ) args in
+       Call_void (new_s, new_args)
+  | Return s ->
+     let new_s = if s = old_var then new_var else s in
+     Return new_s
+  | Print -> Print
+  | _ -> expr
+
+let substitute_multiple_vars (subst_list : (string * string) list) (expr : expression) : expression =
   List.fold_left (fun acc (old_var, new_var) -> substitute_var old_var new_var acc) expr subst_list
 
 let bind_params_with_args_in_protocol (protocol : protocol) (args : arg list) : protocol =
@@ -597,7 +621,7 @@ let bind_params_with_args_in_protocol (protocol : protocol) (args : arg list) : 
   if List.length param_names <> List.length arg_names then
     raise (Failure "Argument count does not match parameter count");
   let subst_list = List.combine param_names arg_names in
-  let new_expressions = substitue_multiple_vars subst_list protocol.expressions in
+  let new_expressions = substitute_multiple_vars subst_list protocol.expressions in
   { protocol with expressions = new_expressions; arglist = args }
 
 let bind_params (formal_params : arg list) (actual_args : arg list) (expr : expression) : expression =
@@ -606,7 +630,7 @@ let bind_params (formal_params : arg list) (actual_args : arg list) (expr : expr
   if List.length param_names <> List.length arg_names then
     raise (Failure "Argument count does not match parameter count");
   let subst_list = List.combine param_names arg_names in
-  substitue_multiple_vars subst_list expr
+  substitute_multiple_vars subst_list expr
 
 let create_alpha_converted_expr s args env =
     let p = retrieve_protocol s env.protocols in
