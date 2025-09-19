@@ -15,10 +15,10 @@ solution soly = [molb(2.87 mM)] in [dmf];
 print;
 
 protocol <solution> conjugate (pepsol molsol volume){
-         solution solz = mix pepsol (1.0 eq) + molsol (3.0 eq) at volume mL
-         #agitate solz;
-         #changeTemp solz to 21.0 C;
-         #return solz
+         solution solz = mix pepsol (1.0 eq) + molsol (3.0 eq) at volume mL;
+         agitate solz;
+         changeTemp solz to 21.0 C;
+         return solz
 };
 
 #call conjugate solx soly 5.0;

@@ -194,7 +194,8 @@ let mix_solutions_protocol name sol1 sol2 eq1 eq2 (final_volume: volume_type) (m
   let final_vol =
   match final_volume with
   | NoVolume -> 0.0
-  | Volume final_volume -> final_volume in
+  | Volume final_volume -> final_volume 
+  | VolumeParam _ -> 0.0  (* This should not happen after substitution *) in
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
   let stoichiometric_ratio = eq1 /. eq2 in
@@ -223,7 +224,8 @@ let mix_solutions_protocol_return_solution sol1 sol2 eq1 eq2 (final_volume: volu
   let final_vol =
   match final_volume with
   | NoVolume -> 0.0
-  | Volume final_volume -> final_volume in
+  | Volume final_volume -> final_volume 
+  | VolumeParam _ -> 0.0  (* This should not happen after substitution *) in
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
   let stoichiometric_ratio = eq1 /. eq2 in
@@ -247,29 +249,33 @@ let mix_solutions_protocol_return_solution sol1 sol2 eq1 eq2 (final_volume: volu
       } in
     solution
 
+
+
 let mix_solutions_return_solution sol1 sol2 eq1 eq2 (final_volume: float) (map: solution SolutionMap.t) =
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
   let stoichiometric_ratio = eq1 /. eq2 in
-  let moles_1 = solution_1.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
-  let moles_2 = solution_2.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc) 0.0 in
   let volume_1 = (final_volume *. stoichiometric_ratio) /. (stoichiometric_ratio +. 1.0) in
   let volume_2 = final_volume -. volume_1 in
-  let new_conc_1 = moles_1 /. volume_1 in
-  let new_conc_2 = moles_2 /. volume_2 in
+  let moles_1 = solution_1.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc *. volume_1) 0.0 in
+  let moles_2 = solution_2.solutes |> List.fold_left (fun acc (_, conc) -> acc +. conc *. volume_2) 0.0 in
+  let new_conc_1 = if volume_1 > 0. then moles_1 /. final_volume else 0.0 in
+  let new_conc_2 = if volume_2 > 0. then moles_2 /. final_volume else 0.0 in
   let solutes_1 = List.map (fun (solute, _) -> (solute, new_conc_1)) solution_1.solutes in
   let solutes_2 = List.map (fun (solute, _) -> (solute, new_conc_2)) solution_2.solutes in
   let solutes = solutes_1 @ solutes_2 in
   let solvents = solution_1.solvents @ solution_2.solvents in
   let volume = Some final_volume in
-    let solution : solution  = {
-        solutes;
-        solvents;
-        agitate = false;
-        volume;
-        temperature = None;
-      } in
+  let solution : solution  = {
+      solutes;
+      solvents;
+      agitate = false;
+      volume;
+      temperature = None;
+    } in
   solution
+
+
 
 
 
@@ -534,11 +540,23 @@ let rec substitute_var (old_var : string) (new_var : string) (expr : expression)
         let new_s3 = if s3 = old_var then new_var else s3 in
         let new_eq1 = if string_of_float eq1 = old_var then float_of_string new_var else eq1 in
         let new_eq2 = if string_of_float eq2 = old_var then float_of_string new_var  else  eq2 in
-        (match vol with
-        | NoVolume -> Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, NoVolume)
-        | Volume v ->
-        let new_v = if string_of_float v = old_var then Volume (float_of_string new_var) else Volume v in
-        Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, new_v))
+        let new_vol = 
+          match vol with
+          | NoVolume -> NoVolume
+          | Volume v ->
+              (* Handle volume substitution for float values *)
+              if string_of_float v = old_var then 
+                Volume (float_of_string new_var) 
+              else 
+                Volume v
+          | VolumeParam param_name ->
+              (* Handle volume parameter substitution *)
+              if param_name = old_var then
+                (try Volume (float_of_string new_var) with _ -> VolumeParam new_var)
+              else
+                VolumeParam param_name
+        in
+        Mix (new_s1, new_s2, new_s3, new_eq1, new_eq2, new_vol)
     | Agitate s ->
         let new_s = if s = old_var then new_var else s in
         Agitate new_s

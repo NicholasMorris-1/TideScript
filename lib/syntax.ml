@@ -51,7 +51,8 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
       | Mix (s1, s2, s3, eq1, eq2, v) ->
                   let vol_float = match v with
                         | Volume x -> x
-                        | NoVolume -> 0.0 in
+                        | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
+                        | NoVolume -> 10.0 in
                   let solution = mix_solutions_return_solution s2 s3 eq1 eq2 vol_float env.solutions in
                   ({env with solutions = SolutionMap.add s1 solution env.solutions}, None)
       | Agitate (s) ->
@@ -99,7 +100,6 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                               let _, _ = eval_expr alpha_converted_expr p_env in
                               (env, None))
       | Call_solution (s_1, s_2, args) ->
-                  (* Use a copy of the current env so solutions added in the protocol are visible *)
                   let p_env = shallow_copy_env env in
                   let p = retrieve_protocol s_2 env.protocols in
                   (if p.returntype <> SolutionType then
@@ -143,6 +143,7 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   let () = print_env env None in
                   (env, None)
       | _ -> env, None
+
 
 
 (*let eval_protocol_expr (e:expression) (env:env) (p_env) : env =

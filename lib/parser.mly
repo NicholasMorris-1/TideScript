@@ -97,7 +97,7 @@ solution_construction:
     { fun var -> Combine (var, var2, var3) }
   | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = volume_type  ML
     { fun var -> Mix (var, var2, var3, eq1, eq2, vol) }
-  | CALL var2 = ID args = argument_list {fun var -> Call_solution(var, var2, args) }
+  | CALL var2 = ID args = argument_list {fun var -> Call_solution_2(var, var2, args) }
 
 
 return_type:
@@ -106,7 +106,7 @@ return_type:
 
 volume_type:
   | v = FLOAT { Volume v }
-  | ID { NoVolume}
+  | id = ID { VolumeParam id }
 
 
 

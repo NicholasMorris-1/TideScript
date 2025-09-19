@@ -85,6 +85,7 @@ let rec arglist_to_lst (args: arglist) =
 
 type volume_type =
   | Volume of float
+  | VolumeParam of string
   | NoVolume
 
 type expression =
