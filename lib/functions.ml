@@ -1,6 +1,7 @@
 open Types
 open Aminoacids
 open Solvents
+open Periodictable
 
 (*Neccesary to fetch an amino acid from a one letter code input from a sequence*)
 
@@ -23,7 +24,7 @@ let find_average_mass_by_one_letter_code c amino_acid_list =
 
 
 
-(*Same as above bu't for the monoisotopic mass*)
+(*Same as above but for the monoisotopic mass*)
 
 
 let find_monoisotopic_mass_by_one_letter_code  c amino_acid_list =
@@ -353,7 +354,63 @@ let does_protocol_have_return protocol =
   is_there_a_return [protocol.expressions]
 
 
-   (*This function adds user declared molecules to map*)
+(* Function to find atomic mass by symbol *)
+let find_atomic_mass periodic_table symbol =
+  let rec search = function
+    | [] -> failwith ("Element not found: " ^ symbol)
+    | atom :: rest ->
+        if atom.symbol = symbol then atom.atomic_mass
+        else search rest
+  in
+  search periodic_table
+
+(* Parse a number from string, default to 1 if empty *)
+let parse_count str =
+  if str = "" then 1
+  else int_of_string str
+
+(* Regular expression-like parsing for element + count *)
+let parse_element_count s =
+  let len = String.length s in
+  let rec find_digit_start i =
+    if i >= len then i
+    else if s.[i] >= '0' && s.[i] <= '9' then i
+    else find_digit_start (i + 1)
+  in
+  let digit_start = find_digit_start 0 in
+  let element = String.sub s 0 digit_start in
+  let count_str = if digit_start = len then ""
+                  else String.sub s digit_start (len - digit_start) in
+  let count = parse_count count_str in
+  (element, count)
+
+(* Split formula into element-count pairs *)
+let tokenize_formula formula =
+  let len = String.length formula in
+  let rec parse_tokens acc i =
+    if i >= len then List.rev acc
+    else
+      let rec find_next_element j =
+        if j >= len then j
+        else if formula.[j] >= 'A' && formula.[j] <= 'Z' then j
+        else find_next_element (j + 1)
+      in
+      let next_start = find_next_element (i + 1) in
+      let token = String.sub formula i (next_start - i) in
+      let (element, count) = parse_element_count token in
+      parse_tokens ((element, count) :: acc) next_start
+  in
+  if len = 0 then []
+  else parse_tokens [] 0
+
+(* Main function to calculate molecular weight *)
+let calculate_molecular_weight periodic_table formula =
+  let tokens = tokenize_formula formula in
+  let total_weight = List.fold_left (fun acc (element, count) ->
+    let atomic_mass = find_atomic_mass periodic_table element in
+    acc +. (atomic_mass *. float_of_int count)
+  ) 0.0 tokens in
+  total_weight
 
 
 
@@ -364,8 +421,7 @@ let add_molecule name formula map =
     Molecule
     {
       name;
-      average_mass = 0.0;
-      monoisotopic_mass = 0.0;
+      molecular_weight = calculate_molecular_weight periodic_table formula ;
       formula;
       smiles = "";
     }
@@ -532,7 +588,7 @@ let convert_mgML_to_mm (conc: float) (solute: solute) : float =
   let molecular_weight =
     match solute with
     | Peptide p -> p.average_mass
-    | Molecule m -> m.average_mass in
+    | Molecule m -> m.molecular_weight in
   conc /. molecular_weight
 
 
@@ -709,7 +765,7 @@ let print_peptide peptide =
   print_newline()
 
 let print_molecule (molecule : molecule) =
-  Printf.printf "%s: %s\n" molecule.name molecule.formula
+  Printf.printf " %s: %s %.2f\n " molecule.name molecule.formula molecule.molecular_weight
 
 let print_solute = function
   | Peptide p -> print_peptide p

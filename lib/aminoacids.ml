@@ -16,7 +16,7 @@ let parse_line line =
       formula; 
       smiles;
     }
-    | _ -> failwith "You suck at coding" 
+    | _ -> failwith "Csv not formatted correctly"
 
 
 (*function to read in CSV*)

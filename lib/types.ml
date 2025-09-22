@@ -24,8 +24,7 @@ type amino_acid =
 type molecule = {
 
    name: string;
-   monoisotopic_mass : float;
-   average_mass : float;
+   molecular_weight : float;
    formula: string;
    smiles: string
   }
