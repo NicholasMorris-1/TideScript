@@ -24,6 +24,8 @@ let init_env = {
   solvents = SolventMap.empty;
   solutions = SolutionMap.empty;
   protocols = ProtocolMap.empty;
+  resins = ResinMap.empty;
+  rvs = RVMap.empty;
 }
 
 
@@ -34,6 +36,8 @@ let shallow_copy_env (env : env) : env =
     solvents = env.solvents;
     solutions = env.solutions;
     protocols = env.protocols;
+    resins = env.resins;
+    rvs = env.rvs;
   }
 
 let rec eval_expr (e : expression) (env : env) : (env * solution option) =

@@ -111,6 +111,8 @@ let add_peptide name sequence map  =
 
 
 
+
+
 let find_solvent_from_list name  =
   try
   List.find (fun x -> x.solname = name) solvent_list
@@ -448,17 +450,27 @@ let return_solution name global_map protocol_map =
   let key = name in
   SolutionMap.add key solution global_map
 
+let add_resin name loading_opt peptide_opt map =
+  let key = name in
+  let resin : resin = {
+    resname = name;
+    loading = loading_opt;
+    resin_bound_peptide = peptide_opt;
+  } in
+  ResinMap.add key resin map
+
+let add_rv name max_volume_opt resin_opt map =
+  let key = name in
+  let rv : rv = {
+    max_volume = max_volume_opt;
+    resin = resin_opt;
+    solution = None;
+  } in
+  RVMap.add key rv map
 
 
 
 
-
-let create_empty_env () = {
-  solutes = SoluteMap.empty;
-  solvents = SolventMap.empty;
-  solutions = SolutionMap.empty;
-  protocols = ProtocolMap.empty
-}
 
 
 let create_protocol name returntype (arglist: arg list) expressions  =

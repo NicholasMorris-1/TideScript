@@ -57,6 +57,18 @@ type solution = {
   temperature : float option;
 }
 
+type resin = {
+  resname: string;
+  loading: float option; (*mmol/g*)
+  resin_bound_peptide: peptide option;
+}
+
+type rv = {
+  max_volume: float option;
+  resin: resin option;
+  solution : solution option;
+}
+
 type arg =
   | StringArg of string
   | FloatArg of float
@@ -165,6 +177,8 @@ module SolutionKey =
 
 module SolutionMap = Map.Make(SolutionKey)
 
+
+
 (*maps to keep track of user protocols*)
 
 type protocol ={
@@ -184,11 +198,29 @@ module ProtocolKey =
 
 module ProtocolMap = Map.Make(ProtocolKey)
 
+module ResinKey =
+  struct
+    type t = string
+    let compare = compare
+  end
+
+module ResinMap = Map.Make(ResinKey)
+
+module RVKey =
+  struct
+    type t = string
+    let compare = compare
+  end
+
+module RVMap = Map.Make(RVKey)
+
 
 type env = {
 
   solutes: solute SoluteMap.t;
   solvents : solvent SolventMap.t;
   solutions : solution SolutionMap.t;
-  protocols : protocol ProtocolMap.t
+  protocols : protocol ProtocolMap.t;
+  resins : resin ResinMap.t;
+  rvs: rv RVMap.t;
   }

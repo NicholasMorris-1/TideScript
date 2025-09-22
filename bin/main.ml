@@ -2,12 +2,8 @@ open Tidescript
 
 
 let () =
-  let initial_env = {
-    Types.solutes = Types.SoluteMap.empty;
-    Types.solvents = Types.SolventMap.empty;
-    Types.solutions = Types.SolutionMap.empty;
-    Types.protocols = Types.ProtocolMap.empty;
-  } in
+  let initial_env = Syntax.init_env
+   in
 
   let lexbuf = Lexing.from_channel stdin in
   let e = Parser.toplevel Lexer.token lexbuf in
