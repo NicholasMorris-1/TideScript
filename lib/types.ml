@@ -128,6 +128,7 @@ type expression =
   | Addpeptide of string * string
   | Addmolecule of string * string
   | AddResin of string * float * string
+  | AddRV of string * string * float
   | Solvent of string
   | Solution of string * sollist * solvnlist
   | Molsolution of string * string * float * string

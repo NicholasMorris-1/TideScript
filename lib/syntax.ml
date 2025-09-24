@@ -56,6 +56,8 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   ({env with solvents = add_solvent s env.solvents}, None)
       | AddResin (s, c, r) ->
                   ({env with resins = add_resin s c r env.solutes env.resins}, None)
+      | AddRV (s, c, r) ->
+                  ({env with rvs = add_rv s None c (Some r) env.resins env.rvs}, None)
       | Solution (var, args1, args2) ->
                   let solute_list = create_solute_list args1 env.solutes in
                   let solvent_list = create_solvent_list args2 env.solvents in

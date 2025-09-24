@@ -1,0 +1,5 @@
+peptide pre_load = <D>;
+
+resin resin_a = {0.1 g/mol, pre_load};
+
+rv rv_a = {resin_a, 0.1 mg}

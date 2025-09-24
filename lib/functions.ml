@@ -454,6 +454,13 @@ let return_solution name global_map protocol_map =
   let key = name in
   SolutionMap.add key solution global_map
 
+let find_resin_by_name name map =
+  try
+    ResinMap.find name map
+  with
+  | Not_found -> raise Not_found
+
+
 let add_resin name loading_value peptide_id (p_map: solute SoluteMap.t) resin_map =
   let key = name in
   let solute_opt =
@@ -471,15 +478,19 @@ let add_resin name loading_value peptide_id (p_map: solute SoluteMap.t) resin_ma
   } in
   ResinMap.add key resin resin_map
 
-let add_rv name max_volume_opt resin_opt resin_amount_opt map =
+let add_rv name max_volume_opt resin_id resin_amount_opt resin_map rv_map =
   let key = name in
+  let resin_opt =
+    match find_resin_by_name resin_id resin_map with
+    | resin -> Some resin
+    | exception Not_found -> None in
   let rv : rv = {
     max_volume = max_volume_opt;
     resin = resin_opt;
     resin_amount = resin_amount_opt;
     solution = None;
   } in
-  RVMap.add key rv map
+  RVMap.add key rv rv_map
 
 
 
@@ -842,6 +853,24 @@ let print_protocols map =
 let print_solvents map =
   SolventMap.iter (fun k _v -> print_endline k) map
 
+let print_resins map =
+  ResinMap.iter (fun k v ->
+    Printf.printf "Resin Name: %s, Loading: %.2f, " k v.loading;
+    match v.resin_bound_peptide with
+    | Some peptide -> print_peptide peptide
+    | None -> print_endline "No bound peptide"
+  ) map
+
+let print_rvs map =
+  RVMap.iter (fun k v ->
+    Printf.printf "RV Name: %s, Max Volume: %s, Resin Amount: %s, " k
+      (match v.max_volume with Some mv -> string_of_float mv | None -> "None")
+      (match v.resin_amount with Some ra -> string_of_float ra | None -> "None");
+    match v.resin with
+    | Some resin -> Printf.printf "Resin: %s\n" resin.resname
+    | None -> print_endline "No resin"
+  ) map
+
 let print_env env (solution: solution option) =
   print_endline "SOLUTES:";
   (match solution with
@@ -857,4 +886,8 @@ let print_env env (solution: solution option) =
   print_newline ();
   print_endline "SOLVENTS:";
   print_solvents env.solvents;
+  print_endline "RESINS:";
+  print_resins env.resins;
+  print_endline "RVS:";
+  print_rvs env.rvs;
   print_newline ()

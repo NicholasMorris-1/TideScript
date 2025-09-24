@@ -17,6 +17,7 @@ rule token = parse
   | "solvent"       { SOLVENT }
   | "solution"      {SOLUTION}
   | "resin"         {RESIN}
+  | "rv"            {RV}
   | "in"            {IN}
   | "mM"            {MM}
   | "mg"            {MG}
@@ -24,6 +25,7 @@ rule token = parse
   | "C"             {C}
   | "g/Ml"          {GML}
   | "mL"            {ML}
+  | "g/mol"         {GMOL}
   | "L"             {L}
   | "eq"            {EQ}
   | "calculate_average_mass"  {CALCULATE_AVERAGE_MASS}
