@@ -12,6 +12,7 @@
 %token MOLECULE
 %token SOLVENT
 %token SOLUTION
+%token RESIN
 %token PROTOCOL
 %token DISPENSE
 %token FIND
@@ -34,8 +35,11 @@
 %token EQ
 %token MM
 %token MGML
-%token C
+%token GML
+%token COMMA
 %token ML
+%token MG
+%token C
 %token L
 %token CALCULATE_AVERAGE_MASS
 %token GENERATE_SMILES
@@ -132,6 +136,7 @@ expression:
   | MOLECULE var = ID EQUAL LPAREN var2 = MOLID RPAREN {Addmolecule (var, var2)}
   | SOLVENT var = ID {Solvent var}
   | SOLUTION var = ID EQUAL sc = solution_construction { sc var }
+  | RESIN var1 = ID EQUAL LBRACE  var2 = FLOAT MGML COMMA var3 = ID RBRACE {AddResin (var1, var2, var3)}
   //| CALCULATE_AVERAGE_MASS LT var = PEPID GT {CalculateAverageMass (var)}
   //| GENERATE_SMILES LT var = PEPID GT {GenerateSmiles (var)}
   | PROTOCOL  LT ret = return_type GT var = ID LPAREN args = argument_list RPAREN LBRACE body = expression RBRACE   {Protocol (var, ret, args, body)}

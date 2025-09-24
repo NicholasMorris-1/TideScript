@@ -59,14 +59,24 @@ type solution = {
 
 type resin = {
   resname: string;
-  loading: float option; (*mmol/g*)
+  loading: float; (*mmol/g*)
   resin_bound_peptide: peptide option;
 }
 
 type rv = {
   max_volume: float option;
   resin: resin option;
+  resin_amount: float option; (*grams*)
   solution : solution option;
+}
+
+type aa_solution = {
+  aa: amino_acid;
+  solutes  : (solute * float) list;
+  solvents : solvent list;
+  agitate : bool;
+  volume : float option;
+  temperature : float option;
 }
 
 type arg =
@@ -117,6 +127,7 @@ type expression =
   | Sequence of expression * expression
   | Addpeptide of string * string
   | Addmolecule of string * string
+  | AddResin of string * float * string
   | Solvent of string
   | Solution of string * sollist * solvnlist
   | Molsolution of string * string * float * string
@@ -177,6 +188,14 @@ module SolutionKey =
 
 module SolutionMap = Map.Make(SolutionKey)
 
+module AASolutionKey =
+  struct
+    type t = string
+    let compare = compare
+  end
+
+module AASolutionMap = Map.Make(AASolutionKey)
+
 
 
 (*maps to keep track of user protocols*)
@@ -220,6 +239,7 @@ type env = {
   solutes: solute SoluteMap.t;
   solvents : solvent SolventMap.t;
   solutions : solution SolutionMap.t;
+  aa_solutions : aa_solution AASolutionMap.t;
   protocols : protocol ProtocolMap.t;
   resins : resin ResinMap.t;
   rvs: rv RVMap.t;

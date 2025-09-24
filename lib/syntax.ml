@@ -23,6 +23,7 @@ let init_env = {
   solutes = SoluteMap.empty;
   solvents = SolventMap.empty;
   solutions = SolutionMap.empty;
+  aa_solutions = AASolutionMap.empty;
   protocols = ProtocolMap.empty;
   resins = ResinMap.empty;
   rvs = RVMap.empty;
@@ -35,9 +36,11 @@ let shallow_copy_env (env : env) : env =
     solutes = env.solutes;
     solvents = env.solvents;
     solutions = env.solutions;
+    aa_solutions = env.aa_solutions;
     protocols = env.protocols;
     resins = env.resins;
     rvs = env.rvs;
+
   }
 
 let rec eval_expr (e : expression) (env : env) : (env * solution option) =
@@ -51,6 +54,8 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   ({env with solutes = add_molecule s t env.solutes}, None)
       | Solvent (s) ->
                   ({env with solvents = add_solvent s env.solvents}, None)
+      | AddResin (s, c, r) ->
+                  ({env with resins = add_resin s c r env.solutes env.resins}, None)
       | Solution (var, args1, args2) ->
                   let solute_list = create_solute_list args1 env.solutes in
                   let solvent_list = create_solvent_list args2 env.solvents in

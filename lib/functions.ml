@@ -130,7 +130,11 @@ let find_solvent_by_name name map =
   with
   | Not_found -> raise Not_found
 
-
+let find_peptide_by_name name map =
+  try
+    SoluteMap.find name map
+  with
+  | Not_found -> raise Not_found
 
 let init_solution name solute_list solvent_list map =
   let key = name in
@@ -450,20 +454,29 @@ let return_solution name global_map protocol_map =
   let key = name in
   SolutionMap.add key solution global_map
 
-let add_resin name loading_opt peptide_opt map =
+let add_resin name loading_value peptide_id (p_map: solute SoluteMap.t) resin_map =
   let key = name in
+  let solute_opt =
+    match find_peptide_by_name peptide_id p_map with
+    | peptide -> Some peptide
+    | exception Not_found -> None in
+  let peptide_opt =
+    match solute_opt with
+    | Some (Peptide p) -> Some p
+    | _ -> None in
   let resin : resin = {
     resname = name;
-    loading = loading_opt;
+    loading = loading_value;
     resin_bound_peptide = peptide_opt;
   } in
-  ResinMap.add key resin map
+  ResinMap.add key resin resin_map
 
-let add_rv name max_volume_opt resin_opt map =
+let add_rv name max_volume_opt resin_opt resin_amount_opt map =
   let key = name in
   let rv : rv = {
     max_volume = max_volume_opt;
     resin = resin_opt;
+    resin_amount = resin_amount_opt;
     solution = None;
   } in
   RVMap.add key rv map

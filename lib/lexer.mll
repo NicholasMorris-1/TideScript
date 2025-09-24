@@ -16,10 +16,13 @@ rule token = parse
   | "molecule"      { MOLECULE }
   | "solvent"       { SOLVENT }
   | "solution"      {SOLUTION}
+  | "resin"         {RESIN}
   | "in"            {IN}
   | "mM"            {MM}
+  | "mg"            {MG}
   | "mgML"          {MGML}
   | "C"             {C}
+  | "g/Ml"          {GML}
   | "mL"            {ML}
   | "L"             {L}
   | "eq"            {EQ}
@@ -56,6 +59,7 @@ rule token = parse
   | "}"             { RBRACE}
   | "["             {LBRAC}
   | "]"             {RBRAC}
+  | ","             {COMMA}
   | ['a'-'z' '_']*     { ID (Lexing.lexeme lexbuf) }
   | ['A'- 'Z']*     { PEPID (Lexing.lexeme lexbuf) }
   | ['a'-'z' 'A'-'Z' '0'-'9']*   { MOLID (Lexing.lexeme lexbuf) }
