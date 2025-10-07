@@ -8,4 +8,4 @@ solvent dmf;
 
 molecule fmoc_lys_boc = (C26H32N2O6);
 
-aa_solution lyssol = K , [fmoc_lys_boc(1.0 mM)] in [dmf]
+solution lys_sol = [fmoc_lys_boc(1.0 mM)] in [dmf]
