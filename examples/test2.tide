@@ -2,4 +2,10 @@ peptide pre_load = <D>;
 
 resin resin_a = {0.1 g/mol, pre_load};
 
-rv rv_a = {resin_a, 0.1 mg}
+rv rv_a = {resin_a, 0.1 mg};
+
+solvent dmf;
+
+molecule fmoc_lys_boc = (C26H32N2O6);
+
+aa_solution lyssol = K , [fmoc_lys_boc(1.0 mM)] in [dmf]

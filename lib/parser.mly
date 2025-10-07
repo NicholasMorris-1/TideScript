@@ -8,10 +8,12 @@
 %token <string> ID
 %token <string> PEPID
 %token <string> MOLID
+%token <char> CODE
 %token PEPTIDE
 %token MOLECULE
 %token SOLVENT
 %token SOLUTION
+%token AASOLUTION
 %token RESIN
 %token RV
 %token PROTOCOL
@@ -138,6 +140,8 @@ expression:
   | MOLECULE var = ID EQUAL LPAREN var2 = MOLID RPAREN {Addmolecule (var, var2)}
   | SOLVENT var = ID {Solvent var}
   | SOLUTION var = ID EQUAL sc = solution_construction { sc var }
+  | AASOLUTION var = ID EQUAL var2 = CODE COMMA LBRAC args1 = sollist RBRAC IN LBRAC args2 = solvnlist RBRAC
+      { AASolution (var, var2, args1, args2) }
   | RESIN var1 = ID EQUAL LBRACE  var2 = FLOAT GMOL COMMA var3 = ID RBRACE {AddResin (var1, var2, var3)}
   | RV var1 = ID EQUAL LBRACE var2 = ID COMMA var3 = FLOAT MG RBRACE {AddRV (var1, var2, var3)}
   //| CALCULATE_AVERAGE_MASS LT var = PEPID GT {CalculateAverageMass (var)}

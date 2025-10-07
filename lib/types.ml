@@ -68,6 +68,9 @@ type rv = {
   resin: resin option;
   resin_amount: float option; (*grams*)
   solution : solution option;
+  agitate: bool;
+  temperature: float option;
+
 }
 
 type aa_solution = {
@@ -131,6 +134,7 @@ type expression =
   | AddRV of string * string * float
   | Solvent of string
   | Solution of string * sollist * solvnlist
+  | AASolution of string * char * sollist * solvnlist
   | Molsolution of string * string * float * string
   | CalculateAverageMass of string
   | GenerateSmiles of string

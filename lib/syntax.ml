@@ -62,6 +62,10 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   let solute_list = create_solute_list args1 env.solutes in
                   let solvent_list = create_solvent_list args2 env.solvents in
                   ({env with solutions = init_solution var solute_list solvent_list env.solutions}, None)
+      | AASolution (var, aa, args1, args2) ->
+                  let solute_list = create_solute_list args1 env.solutes in
+                  let solvent_list = create_solvent_list args2 env.solvents in
+                  ({env with aa_solutions = add_aa_solution var aa solute_list solvent_list env.aa_solutions}, None)
       | Combine (s1, s2, s3) ->
                   ({env with solutions = combine_solutions s1 s2 s3 env.solutions}, None)
       | Mix (s1, s2, s3, eq1, eq2, v, u) ->

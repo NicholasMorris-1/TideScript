@@ -147,6 +147,18 @@ let init_solution name solute_list solvent_list map =
   } in
   SolutionMap.add key solution map
 
+let add_aa_solution name aa_code solute_list solvent_list map =
+  let key = name in
+  let aa = find_amino_acid_by_one_letter_code aa_code natural_amino_acids in
+  let aa_solution : aa_solution = {
+    aa;
+    solutes = solute_list;
+    solvents = solvent_list;
+    agitate = false;
+    volume = None;
+    temperature = None;
+  } in
+  AASolutionMap.add key aa_solution map
 
 
 let find_solution_by_name name map =
@@ -489,6 +501,8 @@ let add_rv name max_volume_opt resin_id resin_amount_opt resin_map rv_map =
     resin = resin_opt;
     resin_amount = resin_amount_opt;
     solution = None;
+    agitate = false;
+    temperature = None;
   } in
   RVMap.add key rv rv_map
 

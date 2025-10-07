@@ -16,6 +16,7 @@ rule token = parse
   | "molecule"      { MOLECULE }
   | "solvent"       { SOLVENT }
   | "solution"      {SOLUTION}
+  | "aa_solution"   {AASOLUTION}
   | "resin"         {RESIN}
   | "rv"            {RV}
   | "in"            {IN}
@@ -62,7 +63,8 @@ rule token = parse
   | "["             {LBRAC}
   | "]"             {RBRAC}
   | ","             {COMMA}
-  | ['a'-'z' '_']*     { ID (Lexing.lexeme lexbuf) }
-  | ['A'- 'Z']*     { PEPID (Lexing.lexeme lexbuf) }
   | ['a'-'z' 'A'-'Z' '0'-'9']*   { MOLID (Lexing.lexeme lexbuf) }
+  | ['a'-'z' '_']*     { ID (Lexing.lexeme lexbuf) }
+  | ['A'-'Z'] as c      {CODE c}
+  | ['A'- 'Z']*     { PEPID (Lexing.lexeme lexbuf) }
   | eof             { EOF }
