@@ -507,6 +507,42 @@ let add_rv name max_volume_opt resin_id resin_amount_opt resin_map rv_map =
   RVMap.add key rv rv_map
 
 
+let agitate_rv (rvname : string) (map : rv RVMap.t)  =
+  let rv = try RVMap.find rvname map with Not_found -> raise Not_found in
+  let new_rv : rv = {
+    max_volume = rv.max_volume;
+    resin = rv.resin;
+    resin_amount = rv.resin_amount;
+    solution = rv.solution;
+    agitate = true;
+    temperature = rv.temperature;
+  } in
+  RVMap.add rvname new_rv map
+
+let add_solution_to_rv (rvname : string) (solname : string) (smap : solution SolutionMap.t) (rmap : rv RVMap.t) =
+  let rv = try RVMap.find rvname rmap with Not_found -> raise Not_found in
+  let solution = try SolutionMap.find solname smap with Not_found -> raise Not_found in
+  let new_rv : rv = {
+    max_volume = rv.max_volume;
+    resin = rv.resin;
+    resin_amount = rv.resin_amount;
+    solution = Some solution;
+    agitate = rv.agitate;
+    temperature = rv.temperature;
+  } in
+  RVMap.add rvname new_rv rmap
+
+let drain_rv (rvname : string) (rmap : rv RVMap.t) =
+  let rv = try RVMap.find rvname rmap with Not_found -> raise Not_found in
+  let new_rv : rv = {
+    max_volume = rv.max_volume;
+    resin = rv.resin;
+    resin_amount = rv.resin_amount;
+    solution = None;
+    agitate = rv.agitate;
+    temperature = rv.temperature;
+  } in
+  RVMap.add rvname new_rv rmap
 
 
 
