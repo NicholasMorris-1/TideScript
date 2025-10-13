@@ -77,7 +77,15 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   ({env with solutions = SolutionMap.add s1 solution env.solutions}, None)
 
       | Agitate (s) ->
-                  ({env with solutions = agitate_solution s env.solutions}, None)
+        (match SolutionMap.find_opt s env.solutions with
+         | Some _sol ->
+           ({env with solutions = agitate_solution s env.solutions}, None)
+         | None ->
+           (match RVMap.find_opt s env.rvs with
+            | Some _rv ->
+              ({env with rvs = agitate_toggle_rv s env.rvs}, None)
+            | None ->
+              raise (Failure ("No solution or RV named " ^ s))))
       | Return (s) ->
                   let solution = find_solution_by_name s env.solutions in
                   env, Some solution

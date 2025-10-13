@@ -338,6 +338,8 @@ let agitate_solution (solname : string) (map : solution SolutionMap.t)  =
   } in
   SolutionMap.add solname new_solution map
 
+
+
 let de_agitate_solution (solname : string) (map : solution SolutionMap.t)  =
   let solution = find_solution_by_name solname map in
   let new_solution : solution = {
@@ -518,6 +520,68 @@ let agitate_rv (rvname : string) (map : rv RVMap.t)  =
     temperature = rv.temperature;
   } in
   RVMap.add rvname new_rv map
+
+let de_agitate_rv (rvname : string) (map : rv RVMap.t)  =
+  let rv = try RVMap.find rvname map with Not_found -> raise Not_found in
+  let new_rv : rv = {
+    max_volume = rv.max_volume;
+    resin = rv.resin;
+    resin_amount = rv.resin_amount;
+    solution = rv.solution;
+    agitate = false;
+    temperature = rv.temperature;
+  } in
+  RVMap.add rvname new_rv map
+
+let agitate_toggle_rv (rvname :string) (map : rv RVMap.t) =
+  let rv = try RVMap.find rvname map with Not_found -> raise Not_found in
+  match rv.agitate with
+  | true -> let new_rv : rv = {
+              max_volume = rv.max_volume;
+              resin = rv.resin;
+              resin_amount = rv.resin_amount;
+              solution = rv.solution;
+              agitate = false;
+              temperature = rv.temperature;
+            } in
+            RVMap.add rvname new_rv map
+  | false -> let new_rv : rv = {
+               max_volume = rv.max_volume;
+               resin = rv.resin;
+               resin_amount = rv.resin_amount;
+               solution = rv.solution;
+               agitate = true;
+               temperature = rv.temperature;
+             } in
+             RVMap.add rvname new_rv map
+
+let agitate_toggle_solution (solname :string) (map : solution SolutionMap.t) =
+  let solution = try SolutionMap.find solname map with Not_found -> raise Not_found in
+  match solution.agitate with
+  | true -> let new_solution : solution = {
+              solutes = solution.solutes;
+              solvents = solution.solvents;
+              agitate = false;
+              volume = solution.volume;
+              temperature = solution.temperature;
+            } in
+            SolutionMap.add solname new_solution map
+  | false -> let new_solution : solution = {
+               solutes = solution.solutes;
+               solvents = solution.solvents;
+               agitate = true;
+               volume = solution.volume;
+               temperature = solution.temperature;
+             } in
+             SolutionMap.add solname new_solution map
+
+let agitate_toggle_rv_or_solution name (rmap : rv RVMap.t) (smap : solution SolutionMap.t) =
+  try
+    agitate_toggle_rv name rmap
+  with Not_found ->
+    agitate_toggle_solution name smap |> ignore;
+    rmap
+
 
 let add_solution_to_rv (rvname : string) (solname : string) (smap : solution SolutionMap.t) (rmap : rv RVMap.t) =
   let rv = try RVMap.find rvname rmap with Not_found -> raise Not_found in

@@ -1,6 +1,0 @@
-protocol <solution> simple (vol unit){
-    solution result = mix a (1.0 eq) + b (1.0 eq) at vol unit;
-    return result
-};
-
-solution test = call simple x y 5.0 mL;
