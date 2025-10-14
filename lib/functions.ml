@@ -575,18 +575,24 @@ let agitate_toggle_solution (solname :string) (map : solution SolutionMap.t) =
              } in
              SolutionMap.add solname new_solution map
 
-let agitate_toggle_rv_or_solution name (rmap : rv RVMap.t) (smap : solution SolutionMap.t) =
+let agitate_toggle_rv_or_solution (name :string) (rmap : rv RVMap.t) (smap : solution SolutionMap.t) env =
   try
-    agitate_toggle_rv name rmap
+    let _ = RVMap.find name rmap in
+    agitate_toggle_rv name rmap, smap, env
   with Not_found ->
-    agitate_toggle_solution name smap |> ignore;
-    rmap
+    try
+      let _ = SolutionMap.find name smap in
+      rmap, agitate_toggle_solution name smap, env
+    with Not_found ->
+      rmap, smap, env
 
 
-let add_solution_to_rv (rvname : string) (solname : string) (smap : solution SolutionMap.t) (rmap : rv RVMap.t) =
+
+
+let add_solution_to_rv (rvname : string) (solname : string)  (smap : solution SolutionMap.t) (rmap : rv RVMap.t) =
   let rv = try RVMap.find rvname rmap with Not_found -> raise Not_found in
   let solution = try SolutionMap.find solname smap with Not_found -> raise Not_found in
-  let new_rv : rv = {
+    let new_rv : rv = {
     max_volume = rv.max_volume;
     resin = rv.resin;
     resin_amount = rv.resin_amount;

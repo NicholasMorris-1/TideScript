@@ -24,6 +24,7 @@
 %token MIX
 %token COMBINE
 %token AND
+%token ADD
 %token AT
 %token TO
 %token AGITATE
