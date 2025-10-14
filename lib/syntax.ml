@@ -85,7 +85,8 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                         | NoVolume -> 10.0 in
                   let env' = add_solution_to_rv_with_unit s2 s1 vol_float u env in
                   (env', None)
-
+      | Drain(s) ->
+                  {env with rvs = drain_rv s env.rvs}, None
       | Return (s) ->
                   let solution = find_solution_by_name s env.solutions in
                   env, Some solution
