@@ -1,0 +1,38 @@
+solvent dmf;
+
+peptide pre_load = <D>;
+
+resin resin_a = {0.1 g/mol, pre_load};
+
+rv rv_a = {resin_a, 0.1 mg};
+
+solvent dcm;
+
+solvent methanol;
+solvent ether;
+
+molecule tfa  = (C2HF3O2);
+solution tfa_sol = neat (tfa);
+
+molecule edt = (C2H4S2H2);
+solution edt_sol = neat(edt);
+
+molecule water = (H20);
+solution water_sol = neat(water);
+
+molecule tips = (CH32CH3SIH);
+solution tips_sol = neat(tips);
+
+protocol<void> wash (rvx solutionx){
+  add solutionx (5.0 mL) to rvx;
+  drain rvx
+};
+
+protocol<void> final_wash (rvz){
+    call wash rvz dcm;
+	call wash rvx methanol;
+	call wash rvx ether;
+	drain rvz
+}
+
+#call final_wash rv_a

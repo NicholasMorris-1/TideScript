@@ -1,3 +1,6 @@
 water,H20,true,true
 dmso,C2H6OS,true,true
 dmf,C3H7NO,false,true
+dcm,CCl2H2,false,false
+methanol,CH3OH,true,true
+ether,C2H6O,false,false
