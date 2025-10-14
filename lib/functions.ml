@@ -676,6 +676,18 @@ let drain_rv (rvname : string) (rmap : rv RVMap.t) =
   RVMap.add rvname new_rv rmap
 
 
+let create_solution_from_neat_molecule (molecule_name : string) (env: env) : solution =
+  let molecule = find_molecule_by_name molecule_name env.solutes in
+  let solute_list = [(molecule, 1.0)] in
+  let solvent_list = [] in
+  {
+    solutes = solute_list;
+    solvents = solvent_list;
+    agitate = false;
+    volume = None;
+    temperature = None;
+  }
+
 
 
 let create_protocol name returntype (arglist: arg list) expressions  =

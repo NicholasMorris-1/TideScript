@@ -1,11 +1,61 @@
+solvent dmf;
+
 peptide pre_load = <D>;
 
 resin resin_a = {0.1 g/mol, pre_load};
 
 rv rv_a = {resin_a, 0.1 mg};
 
-solvent dmf;
+molecule fmoc_lys_boc = (C26H32N2O6);
 
-molecule fmoc_lys_boc = (C26H32N2O6)
+solution lys_sol = [fmoc_lys_boc(1.0 mM)] in [dmf];
 
-#aa_solution (K) lys_sol =[fmoc_lys_boc(1.0 mM)] in [dmf]
+molecule piperidine = (C5H11N);
+solution deblock = [piperidine(0.14 mM)] in [dmf];
+
+molecule hbtu = ( C11H16F6N5OP );
+solution hbtu_sol = [ hbtu (0.14 mM)] in [dmf];
+
+
+molecule dipea = ( C8H19N );
+solution dipea_sol = [dipea (0.56 mM)] in [dmf];
+
+protocol <void> dmf_wash (rvx){
+         add dmf (5.0 mL) to rvx;
+         drain rvx
+
+
+};
+
+protocol<void> shake_rv (rvx){
+               agitate rvx;
+               wait for 3 hours;
+               agitate rvx;
+               wait for 4 hours
+};
+
+protocol <void>  shake_rv_three_min (rvx){
+                agitate rvx;
+                wait for 2 hours;
+                agitate rvx;
+                wait for 2 hours
+};
+
+protocol <void> deprotection (rvx){
+         add deblock (1.5 mL) to rvx;
+         call shake_rv rvx;
+         drain rvx;
+         call dmf_wash rvx;
+         add deblock(0.75 mL) to rvx;
+         add dmf (0.74 mL) to rvx;
+         call shake_rv rvx;
+         drain rvx
+};
+
+protocol <void> aa_coupling (rvx aminoacid_solution){
+         add aminoacid_solution (5.0 mL) to rvx;
+         add hbtu_sol (5.0 mL) to rvx;
+         add dipea_sol (5.0 mL) to rvx;
+         drain rvx;
+         call dmf_wash rvx
+}
