@@ -575,16 +575,16 @@ let agitate_toggle_solution (solname :string) (map : solution SolutionMap.t) =
              } in
              SolutionMap.add solname new_solution map
 
-let agitate_toggle_rv_or_solution (name :string) (rmap : rv RVMap.t) (smap : solution SolutionMap.t) env =
-  try
-    let _ = RVMap.find name rmap in
-    agitate_toggle_rv name rmap, smap, env
-  with Not_found ->
-    try
-      let _ = SolutionMap.find name smap in
-      rmap, agitate_toggle_solution name smap, env
-    with Not_found ->
-      rmap, smap, env
+let agitate_toggle_rv_or_solution (name :string) (env: env) : env =
+  match find_solution_by_name name env.solutions with
+  | _solution -> let new_solutions = agitate_toggle_solution name env.solutions in
+                {env with solutions = new_solutions}
+  | exception Not_found ->
+      (match RVMap.find_opt name env.rvs with
+       | Some _ -> let new_rvs = agitate_toggle_rv name env.rvs in
+                   {env with rvs = new_rvs}
+       | None -> raise Not_found)
+
 
 
 
