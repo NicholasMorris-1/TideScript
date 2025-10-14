@@ -147,6 +147,7 @@ type expression =
   | Agitate of string
   | AddTo of string * volume_type * volume_unit * string
   | Drain of string
+  | Neat of string * string
   | Return of string
   | Deagitate of string
   | Wait of int

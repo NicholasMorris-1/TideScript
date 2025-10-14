@@ -87,6 +87,9 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   (env', None)
       | Drain(s) ->
                   {env with rvs = drain_rv s env.rvs}, None
+      | Neat (s1, s2) ->
+                  let solution = create_solution_from_neat_molecule s2 env in
+                  ({env with solutions = SolutionMap.add s1 solution env.solutions}, None)
       | Return (s) ->
                   let solution = find_solution_by_name s env.solutions in
                   env, Some solution

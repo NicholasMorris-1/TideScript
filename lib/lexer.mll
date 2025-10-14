@@ -40,6 +40,7 @@ rule token = parse
   | "and"           {AND}
   | "add"           {ADD}
   | "drain"         {DRAIN}
+  | "neat"          {NEAT}
   | "at"            {AT}
   | "to"            {TO}
   | "agitate"       {AGITATE}

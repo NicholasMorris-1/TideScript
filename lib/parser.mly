@@ -25,6 +25,7 @@
 %token COMBINE
 %token AND
 %token ADD
+%token NEAT
 %token DRAIN
 %token AT
 %token TO
@@ -115,6 +116,7 @@ solution_construction:
   | MIX var2 = ID LPAREN eq1 = FLOAT EQ RPAREN PLUS var3 = ID LPAREN eq2 = FLOAT EQ RPAREN AT vol = volume_type unit = volume_unit
     { fun var -> Mix (var, var2, var3, eq1, eq2, vol, unit) }
   | CALL var2 = ID args = argument_list {fun var -> Call_solution_2(var, var2, args) }
+  | NEAT LPAREN var2 = ID RPAREN { fun var -> Neat(var, var2) }
 
 conc_unit:
   | MM { Millimolar }
