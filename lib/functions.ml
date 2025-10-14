@@ -474,6 +474,30 @@ let find_resin_by_name name map =
   with
   | Not_found -> raise Not_found
 
+let dispense_soltution name (dispense_vol: float) (map: solution SolutionMap.t) : solution =
+  let solution = find_solution_by_name name map in
+  match solution.volume with
+  | Some vol when (dispense_vol <= vol) ->
+      let dilution_factor = dispense_vol /. vol in
+      let new_solutes = List.map (fun (solute, conc) -> (solute, conc *. dilution_factor)) solution.solutes in
+      let new_solution : solution = {
+        solutes = new_solutes;
+        solvents = solution.solvents;
+        agitate = solution.agitate;
+        volume = Some dispense_vol;
+        temperature = solution.temperature;
+      } in
+      new_solution
+  | None ->
+    let new_solution : solution = {
+      solutes = solution.solutes;
+      solvents = solution.solvents;
+      agitate = solution.agitate;
+      volume = Some dispense_vol;
+      temperature = solution.temperature;
+    } in new_solution
+  | _ -> raise (Failure "Not enough volume in solution to dispense")
+
 
 let add_resin name loading_value peptide_id (p_map: solute SoluteMap.t) resin_map =
   let key = name in
@@ -584,6 +608,35 @@ let agitate_toggle_rv_or_solution (name :string) (env: env) : env =
        | Some _ -> let new_rvs = agitate_toggle_rv name env.rvs in
                    {env with rvs = new_rvs}
        | None -> raise Not_found)
+
+let is_there_sufficent_volume (rv: rv) (vol: float) =
+  match rv.max_volume with
+  | Some max_vol -> if vol <= max_vol then true else false
+  | None -> true
+
+
+let find_rv_by_name name map =
+  try
+    RVMap.find name map
+  with
+  | Not_found -> raise Not_found
+
+let add_solution_to_rv_2 (rvname : string) (solution_name : string) (vol: float) (_env: env) env =
+  let rv = find_rv_by_name rvname env.rvs in
+    match is_there_sufficent_volume rv vol with
+    | true -> let dispensed_solution = dispense_soltution solution_name vol env.solutions in
+              let new_rv : rv = {
+                max_volume = rv.max_volume;
+                resin = rv.resin;
+                resin_amount = rv.resin_amount;
+                solution = Some dispensed_solution;
+                agitate = rv.agitate;
+                temperature = rv.temperature;
+              } in
+              let new_rvs = RVMap.add rvname new_rv env.rvs in
+              {env with rvs = new_rvs}
+  | false -> raise (Failure "Not enough volume in reaction vessel")
+
 
 
 
