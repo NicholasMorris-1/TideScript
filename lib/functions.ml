@@ -621,7 +621,7 @@ let find_rv_by_name name map =
   with
   | Not_found -> raise Not_found
 
-let add_solution_to_rv_2 (rvname : string) (solution_name : string) (vol: float) (_env: env) env =
+let add_solution_to_rv_2 (rvname : string) (solution_name : string) (vol: float) (env: env) =
   let rv = find_rv_by_name rvname env.rvs in
     match is_there_sufficent_volume rv vol with
     | true -> let dispensed_solution = dispense_soltution solution_name vol env.solutions in
@@ -636,6 +636,14 @@ let add_solution_to_rv_2 (rvname : string) (solution_name : string) (vol: float)
               let new_rvs = RVMap.add rvname new_rv env.rvs in
               {env with rvs = new_rvs}
   | false -> raise (Failure "Not enough volume in reaction vessel")
+
+let add_solution_to_rv_with_unit (rvname : string) (solution_name : string) (vol: float) (volunit: volume_unit) (env: env) :env =
+  let volume_in_ml =
+    match volunit with
+    | Liters -> vol *. 1000.0
+    | Milliliters -> vol
+    | _ -> vol  (* This should not happen after substitution *) in
+  add_solution_to_rv_2 rvname solution_name volume_in_ml env
 
 
 

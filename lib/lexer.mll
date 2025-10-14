@@ -39,6 +39,7 @@ rule token = parse
   | "mix"           {MIX}
   | "and"           {AND}
   | "add"           {ADD}
+  | "drain"         {DRAIN}
   | "at"            {AT}
   | "to"            {TO}
   | "agitate"       {AGITATE}

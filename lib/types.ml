@@ -145,6 +145,8 @@ type expression =
   | ChangeTemp of string * float
   | Mix of string * string * string * float * float * volume_type * volume_unit
   | Agitate of string
+  | AddTo of string * volume_type * volume_unit * string
+  | Drain of string
   | Return of string
   | Deagitate of string
   | Wait of int

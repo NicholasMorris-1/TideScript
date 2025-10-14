@@ -25,6 +25,7 @@
 %token COMBINE
 %token AND
 %token ADD
+%token DRAIN
 %token AT
 %token TO
 %token AGITATE
@@ -145,6 +146,8 @@ expression:
       { AASolution (var, var2, args1, args2) }
   | RESIN var1 = ID EQUAL LBRACE  var2 = FLOAT GMOL COMMA var3 = ID RBRACE {AddResin (var1, var2, var3)}
   | RV var1 = ID EQUAL LBRACE var2 = ID COMMA var3 = FLOAT MG RBRACE {AddRV (var1, var2, var3)}
+  | ADD var1 = ID LPAREN vol = volume_type unit = volume_unit RPAREN TO var2 = ID {AddTo (var1, vol, unit, var2)}
+  | DRAIN var = ID {Drain (var)}
   //| CALCULATE_AVERAGE_MASS LT var = PEPID GT {CalculateAverageMass (var)}
   //| GENERATE_SMILES LT var = PEPID GT {GenerateSmiles (var)}
   | PROTOCOL  LT ret = return_type GT var = ID LPAREN args = argument_list RPAREN LBRACE body = expression RBRACE   {Protocol (var, ret, args, body)}

@@ -78,9 +78,18 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
 
       | Agitate (s) ->
         let env' = agitate_toggle_rv_or_solution s  env in (env', None)
+      | AddTo (s1, v, u, s2) ->
+                  let vol_float = match v with
+                        | Volume x -> x
+                        | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
+                        | NoVolume -> 10.0 in
+                  let env' = add_solution_to_rv_with_unit s2 s1 vol_float u env in
+                  (env', None)
+
       | Return (s) ->
                   let solution = find_solution_by_name s env.solutions in
                   env, Some solution
+
       | ChangeTemp (s, t) ->
                   ({env with solutions = change_temp_solution s t env.solutions}, None)
       | Deagitate (s) ->
