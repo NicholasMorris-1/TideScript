@@ -35,7 +35,13 @@ You may need to run ```eval $(opam env)``` each new session depending on how you
 
 Example scripts are found in the examples directory, these are the same scripts presented in the paper. From the root directory you can run ```bash compile.sh``` to test out examples, and you can comment out lines acordingly. Feel free to create your own scripts! 
 
-Or you can run (from the data/ directory) ```cat ../examples/<example>.tide | OCAMLRUNPARAM=b  dune exec tidescript``` replacing \<example\> with your desired script.
+Or you can run (from the data/ directory) 
+
+```
+dune build
+cat ../examples/<example>.tide | OCAMLRUNPARAM=b  dune exec tidescript
+``` 
+replacing \<example\> with your desired script.
 
 
 
