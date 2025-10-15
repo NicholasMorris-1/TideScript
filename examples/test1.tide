@@ -16,7 +16,7 @@ protocol <solution> conjugate (pep_sol mol_sol volume unit){
     solution new_solution = mix pep_sol (1.0 eq) + mol_sol (3.0 eq) at volume unit;
     changeTemp new_solution to 21.0 C;
     agitate new_solution;
-    wait for 3 hours;
+    #wait for 3 hours;
     return new_solution
 };
 

@@ -29,16 +29,16 @@ protocol <void> dmf_wash (rvx){
 
 protocol<void> shake_rv (rvx){
                agitate rvx;
-               wait for 3 hours;
+               #wait for 3 hours;
                agitate rvx;
                wait for 4 hours
 };
 
 protocol <void>  shake_rv_three_min (rvx){
                 agitate rvx;
-                wait for 2 hours;
+                #wait for 2 hours;
                 agitate rvx;
-                wait for 2 hours
+                #wait for 2 hours
 };
 
 protocol <void> deprotection (rvx){
