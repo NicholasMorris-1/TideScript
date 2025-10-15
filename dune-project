@@ -10,9 +10,9 @@
 (source
  (github username/reponame))
 
-(authors "Author Name")
+(authors "Nicholas Morris")
 
-(maintainers "Maintainer Name")
+(maintainers "Nicholas Morris")
 
 (license LICENSE)
 

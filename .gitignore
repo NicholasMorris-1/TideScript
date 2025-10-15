@@ -47,3 +47,6 @@ lexer.ml
 
 # Logs or custom debug files
 *.log
+
+#Opam
+*.opam
