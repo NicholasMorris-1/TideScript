@@ -12,6 +12,8 @@ solvent dmf;
 solution sol_x = [pep_a(2.0 mM)] in [dmf];
 solution sol_y = [mol_b(2.87 mgML)] in [dmf];
 
+solution sol_z = mix sol_x (1.0 eq) +  sol_y (3.0 eq) at 50.0 mL;
+
 protocol <solution> conjugate (pep_sol mol_sol volume unit){
     solution new_solution = mix pep_sol (1.0 eq) + mol_sol (3.0 eq) at volume unit;
     changeTemp new_solution to 21.0 C;

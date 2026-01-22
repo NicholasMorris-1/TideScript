@@ -181,6 +181,7 @@ let combine_solutions name sol1 sol2 (map: solution SolutionMap.t) =
   } in
   SolutionMap.add name solution map
 
+
 let mix_solutions name sol1 sol2 eq1 eq2 (final_volume: float) (map: solution SolutionMap.t) =
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
