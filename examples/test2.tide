@@ -38,7 +38,7 @@ protocol <void>  shake_rv_three_min (rvx){
                 agitate rvx;
                 #wait for 2 hours;
                 agitate rvx;
-                #wait for 2 hours
+                wait for 2 hours
 };
 
 protocol <void> deprotection (rvx){
