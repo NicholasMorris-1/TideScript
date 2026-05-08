@@ -1,7 +1,8 @@
-(*open Types*)
+open Types
 
 type container = {
   id: int;
+  name: string option;
   occupied_voume: float;
   required_volume: float; (*in mL*)
   temperature: float;    (*in degrees c*)
@@ -60,6 +61,7 @@ let generate_container_id map =
 let add_container_to_map occupied_voume required_volume map =
   let container = {
     id = generate_container_id map;
+    name = None;
     occupied_voume = occupied_voume;
     required_volume = required_volume;
     temperature = 25.0;
@@ -75,7 +77,7 @@ let change_container_temp container new_temp map =
   let updated_container = {container with temperature = new_temp} in
   ContainerMap.add (string_of_int container.id) updated_container map
 
-let update_container_volume container new_occupied_volume map =
+let update_container_volume container (new_occupied_volume: float) map =
   let updated_container = {container with occupied_voume = new_occupied_volume} in
   ContainerMap.add (string_of_int container.id) updated_container map
 
@@ -143,7 +145,75 @@ let create_init_frame_if_empty (ir_prog : ir_program) : ir_program =
 
 
 
-
-
 (*here we eval the expressions to update the intermediate representation,
   in the ir we do not care about molecules, concentrations, etc *)
+
+
+let rec eval_expr_for_ir (e: expression) (ir_prog: ir_program) : ir_program =
+  match e with
+  | Sequence (e1, e2) ->
+      let ir_prog' = eval_expr_for_ir e1 ir_prog in
+        eval_expr_for_ir e2 ir_prog'
+  | Solution (s,_,_) ->
+     let container = {
+        id = generate_container_id (ContainerMap.empty);
+        name = Some s;
+        occupied_voume = 0.0;
+        required_volume = 10.0; (*default volume for a solution*)
+        temperature = 25.0;
+        agitation = false
+      } in
+      let new_map = add_container_to_map container.occupied_voume container.required_volume ContainerMap.empty in
+      let new_frame = create_frame (Dispense (container, container)) {containers = new_map} 1.0 in
+      {frames = ir_prog.frames @ [new_frame]}
+  | AASolution (s,_,_,_) ->
+     let container = {
+        id = generate_container_id (ContainerMap.empty);
+        name = Some s;
+        occupied_voume = 0.0;
+        required_volume = 10.0; (*default volume for a solution*)
+        temperature = 25.0;
+        agitation = false
+      } in
+      let new_map = add_container_to_map container.occupied_voume container.required_volume ContainerMap.empty in
+      let new_frame = create_frame (Dispense (container, container)) {containers = new_map} 1.0 in
+      {frames = ir_prog.frames @ [new_frame]}
+  | Agitate s ->
+      let container = ContainerMap.find s (ContainerMap.empty) in
+      let new_map = agitate_container container ContainerMap.empty in
+      let new_frame = create_frame (Agitate container) {containers = new_map} 0.5 in
+      {frames = ir_prog.frames @ [new_frame]}
+  | ChangeTemp (s, temp) ->
+        let container = ContainerMap.find s (ContainerMap.empty) in
+        let new_map = change_container_temp container temp ContainerMap.empty in
+        let new_frame = create_frame (ChangeTemp container) {containers = new_map} 1.0 in
+        {frames = ir_prog.frames @ [new_frame]}
+  | Mix (s1, s2, s3, _, _, v, _) ->
+        let container1 = ContainerMap.find s1 (ContainerMap.empty) in
+        let container2 = ContainerMap.find s2 (ContainerMap.empty) in
+        let volume = match v with
+          | Volume x -> x
+          | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
+          | NoVolume -> 10.0 in
+        let container3 = {
+            id = generate_container_id (ContainerMap.empty);
+            name = Some s3;
+            occupied_voume = volume;
+            required_volume = volume;
+            temperature = 25.0;
+            agitation = false
+          } in
+        let new_map = add_container_to_map container3.occupied_voume container3.required_volume ContainerMap.empty in
+        let new_map' = update_container_volume container1 (container1.occupied_voume +. volume) new_map in
+        let new_map'' = update_container_volume container2 (container2.occupied_voume +. volume) new_map' in
+        let new_frame = create_frame (Dispense (container1, container3)) {containers = new_map''} 2.0 in
+        {frames = ir_prog.frames @ [
+            new_frame;
+            create_frame (Dispense (container2, container3)) {containers = new_map''} 2.0
+            ]}
+  |  _ -> ir_prog
+
+
+let print ir_prog =
+  let json = generate_json_from_ir_program ir_prog in
+  print_endline json
