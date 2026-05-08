@@ -102,9 +102,6 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   let () = Unix.sleep 2 in
                   let () = Printf.printf "Waiting for %d hours\n" x in
                   (env, None)
-      | PrintUniprotGetData peptide_name ->
-                  let () = print_uniprot_getdata peptide_name env in
-                  (env, None)
       | Protocol (s, r, a, e) ->
                   ({env with protocols = add_protocol (create_protocol s r a e) env.protocols}, None)
       | Call (s, args) ->
