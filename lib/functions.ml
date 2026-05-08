@@ -769,6 +769,7 @@ let rec free_vars (expr : expression) : string list =
       ) [] args in
       s :: arg_vars
   | Return s -> [s]
+  | PrintUniprotGetData s -> [s]
   | Print -> []
   (*| Dispense v -> [v]
     | FindLocation v -> [v]*)
@@ -820,6 +821,72 @@ let convert_mgML_to_mm (conc: float) (solute: solute) : float =
     | Peptide p -> p.average_mass
     | Molecule m -> m.molecular_weight in
   conc /. molecular_weight
+
+let peptide_sequence_string peptide =
+  peptide.sequence
+  |> List.map (fun aa -> String.make 1 aa.one_letter_code)
+  |> String.concat ""
+
+let rec take n values =
+  if n <= 0 then
+    []
+  else
+    match values with
+    | [] -> []
+    | value :: rest -> value :: take (n - 1) rest
+
+let print_uniprot_request req =
+  let method_name =
+    match req.Uniprot.meth with
+    | Uniprot.GET -> "GET"
+    | Uniprot.POST -> "POST" in
+  Printf.printf "%s %s\n" method_name req.url;
+  List.iter
+    (fun (name, value) -> Printf.printf "%s: %s\n" name value)
+    req.Uniprot.headers;
+  match req.Uniprot.body with
+  | None -> ()
+  | Some body -> Printf.printf "\n%s\n" body
+
+let print_uniprot_getdata peptide_name env =
+  match find_solute_by_name peptide_name env.solutes with
+  | Peptide peptide ->
+      let sequence = peptide_sequence_string peptide in
+      let api = Uniprot.open_api () in
+      Printf.printf "UNIPROT.getdata(%s)\n" peptide_name;
+      Printf.printf "sequence: %s\n" sequence;
+      (try
+         let accessions = Uniprot.peptide_search_accessions sequence in
+         match accessions with
+         | [] ->
+             Printf.printf "No UniProt records found containing peptide sequence %s.\n" sequence
+         | _ ->
+             let query =
+               accessions
+               |> take 10
+               |> List.map (fun accession -> "accession:" ^ accession)
+               |> String.concat " OR "
+             in
+             let req =
+               Uniprot.search_request
+                 ~format:Uniprot.Tsv
+                 ~fields:["accession"; "id"; "protein_name"; "organism_name"; "length"; "sequence"]
+                 ~size:10
+                 api
+                 Uniprot.UniProtKB
+                 query
+             in
+             let response = Uniprot.perform_request req in
+             match String.trim response with
+             | "" ->
+                 Printf.printf "No UniProt records found for sequence %s.\n" sequence
+             | trimmed ->
+                 Printf.printf "%s\n" trimmed
+       with
+       | Uniprot.Request_failed message ->
+           Printf.printf "UniProt request failed: %s\n" message)
+  | Molecule _ ->
+      raise (Failure ("UNIPROT.getdata expects a peptide, but " ^ peptide_name ^ " is a molecule"))
 
 
 
@@ -904,6 +971,9 @@ let rec substitute_var (old_var : string) (new_var : string) (expr : expression)
   | Return s ->
      let new_s = if s = old_var then new_var else s in
      Return new_s
+  | PrintUniprotGetData s ->
+     let new_s = if s = old_var then new_var else s in
+     PrintUniprotGetData new_s
   | Print -> Print
   | _ -> expr
 

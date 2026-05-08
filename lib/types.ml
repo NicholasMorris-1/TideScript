@@ -152,6 +152,7 @@ type expression =
   | Deagitate of string
   | Wait of int
   | Print
+  | PrintUniprotGetData of string
   | Call of string * arg list
   | Call_2 of string * arg list
   | Call_void of string * arg list

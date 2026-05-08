@@ -51,10 +51,13 @@
 %token CALCULATE_AVERAGE_MASS
 %token GENERATE_SMILES
 %token PRINT
+%token UNIPROT
+%token GETDATA
 %token CALL
 %token VOID
 %token LPAREN
 %token RPAREN
+%token DOT
 %token LBRACE
 %token RBRACE
 %token LBRAC
@@ -160,5 +163,6 @@ expression:
   | STOP AGITATE var = ID {Deagitate(var)}
   | WAIT FOR var = NUMERAL HOURS {Wait(var)}
   | DISPENSE var = ID {Dispense var}
+  | PRINT UNIPROT DOT GETDATA LPAREN var = ID RPAREN {PrintUniprotGetData var}
   | PRINT {Print}
   | CALL var = ID args = argument_list  {Call_void(var, args)}

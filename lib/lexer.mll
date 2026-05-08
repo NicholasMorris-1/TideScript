@@ -51,11 +51,14 @@ rule token = parse
   | "minutes"       {MINUTES}
   | "hours"         {HOURS}
   | "print"         {PRINT}
+  | "UNIPROT"       {UNIPROT}
+  | "getdata"       {GETDATA}
   | "call"          {CALL}
   | "void"          {VOID}
   | "return"        {RETURN}
   | "("             { LPAREN }
   | ")"             { RPAREN }
+  | "."             { DOT }
   | ';' 		    { SEMICOLON }
   | '+'             {PLUS}
   | '='             { EQUAL }

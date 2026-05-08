@@ -1,0 +1,3 @@
+peptide pepa = <NICKISEPIC>;
+
+print UNIPROT.getdata(pepa)

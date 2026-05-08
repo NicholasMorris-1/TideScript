@@ -1,0 +1,3 @@
+peptide pep_aavee = <AAVEEGIVLGGGCALLR>;
+
+print UNIPROT.getdata(pep_aavee)
