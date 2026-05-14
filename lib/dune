@@ -1,6 +1,6 @@
 (library
  (name tidescript)
-(libraries unix))
+(libraries unix ocamlgraph))
 
  (menhir
  (modules parser)
