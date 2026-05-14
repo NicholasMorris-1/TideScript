@@ -1,8 +1,8 @@
-open Types
+(*open Types*)
 
 type container = {
   id: int;
-  name: string option;
+  name: string ;
   occupied_voume: float;
   required_volume: float; (*in mL*)
   temperature: float;    (*in degrees c*)
@@ -35,10 +35,6 @@ type ir_program = {
   frames: frame list
 }
 
-(*let ir_program : ir_program = {
-  frames = []
-  }*)
-
 let frame_empty : frame = {
   step = Init;
   state = {containers = ContainerMap.empty};
@@ -58,34 +54,87 @@ let generate_container_id map =
         let _, last_container = ContainerMap.max_binding map in
         last_container.id + 1
 
-let add_container_to_map occupied_voume required_volume map =
+let add_container_to_map occupied_voume required_volume map name =
   let container = {
     id = generate_container_id map;
-    name = None;
+    name = name;
     occupied_voume = occupied_voume;
     required_volume = required_volume;
     temperature = 25.0;
     agitation = false
   } in
-    ContainerMap.add (string_of_int container.id) container map
+    ContainerMap.add name container map
 
+(* All three helpers now key by container.name, not string_of_int container.id *)
 let agitate_container container map =
   let updated_container = {container with agitation = not container.agitation} in
-  ContainerMap.add (string_of_int container.id) updated_container map
+  ContainerMap.add container.name updated_container map
 
 let change_container_temp container new_temp map =
   let updated_container = {container with temperature = new_temp} in
-  ContainerMap.add (string_of_int container.id) updated_container map
+  ContainerMap.add container.name updated_container map
 
 let update_container_volume container (new_occupied_volume: float) map =
   let updated_container = {container with occupied_voume = new_occupied_volume} in
-  ContainerMap.add (string_of_int container.id) updated_container map
+  ContainerMap.add container.name updated_container map
+
+let env_to_frame ?(step = Init) ?(execution_time = 0.0) (env: Types.env) : frame =
+  let option_or default = function
+    | Some value -> value
+    | None -> default
+  in
+  let add_solution_as_container map ((name, solution): string * Types.solution) =
+    let occupied_volume = option_or 0.0 solution.Types.volume in
+    let required_volume = occupied_volume in
+    let container = {
+      id = generate_container_id map;
+      name = name;
+      occupied_voume = occupied_volume;
+      required_volume = required_volume;
+      temperature = option_or 25.0 solution.Types.temperature;
+      agitation = solution.Types.agitate
+    } in
+    ContainerMap.add name container map
+  in
+  let add_rv_as_container map ((name, rv): string * Types.rv) =
+    let occupied_volume =
+      match rv.Types.solution with
+      | Some solution -> option_or 0.0 solution.Types.volume
+      | None -> 0.0
+    in
+    let required_volume = option_or occupied_volume rv.Types.max_volume in
+    let temperature =
+      match rv.Types.temperature, rv.Types.solution with
+      | Some t, _ -> t
+      | None, Some solution -> option_or 25.0 solution.Types.temperature
+      | None, None -> 25.0
+    in
+    let container = {
+      id = generate_container_id map;
+      name = name;
+      occupied_voume = occupied_volume;
+      required_volume = required_volume;
+      temperature = temperature;
+      agitation = rv.Types.agitate
+    } in
+    ContainerMap.add name container map
+  in
+  let containers_from_solutions =
+    Types.SolutionMap.bindings env.Types.solutions
+    |> List.fold_left add_solution_as_container ContainerMap.empty
+  in
+  let containers =
+    Types.RVMap.bindings env.Types.rvs
+    |> List.fold_left add_rv_as_container containers_from_solutions
+  in
+  create_frame step {containers = containers} execution_time
 
 
 let generate_json_from_ir_program (program: ir_program) : string =
   let container_to_json (container: container) : Yojson.Basic.t =
     `Assoc [
       ("id", `Int container.id);
+      ("name", `String container.name);
       ("occupied_volume", `Float container.occupied_voume);
       ("required_volume", `Float container.required_volume);
       ("temperature", `Float container.temperature);
@@ -126,8 +175,6 @@ let generate_json_from_ir_program (program: ir_program) : string =
   let frames_json =
     List.map frame_to_json program.frames
   in
-
-
   let program_json = `Assoc [
     ("frames", `List frames_json)
   ] in
@@ -141,79 +188,9 @@ let create_init_frame_if_empty (ir_prog : ir_program) : ir_program =
     else
         ir_prog
 
-
-
-
-
-(*here we eval the expressions to update the intermediate representation,
-  in the ir we do not care about molecules, concentrations, etc *)
-
-
-let rec eval_expr_for_ir (e: expression) (ir_prog: ir_program) : ir_program =
-  match e with
-  | Sequence (e1, e2) ->
-      let ir_prog' = eval_expr_for_ir e1 ir_prog in
-        eval_expr_for_ir e2 ir_prog'
-  | Solution (s,_,_) ->
-     let container = {
-        id = generate_container_id (ContainerMap.empty);
-        name = Some s;
-        occupied_voume = 0.0;
-        required_volume = 10.0; (*default volume for a solution*)
-        temperature = 25.0;
-        agitation = false
-      } in
-      let new_map = add_container_to_map container.occupied_voume container.required_volume ContainerMap.empty in
-      let new_frame = create_frame (Dispense (container, container)) {containers = new_map} 1.0 in
-      {frames = ir_prog.frames @ [new_frame]}
-  | AASolution (s,_,_,_) ->
-     let container = {
-        id = generate_container_id (ContainerMap.empty);
-        name = Some s;
-        occupied_voume = 0.0;
-        required_volume = 10.0; (*default volume for a solution*)
-        temperature = 25.0;
-        agitation = false
-      } in
-      let new_map = add_container_to_map container.occupied_voume container.required_volume ContainerMap.empty in
-      let new_frame = create_frame (Dispense (container, container)) {containers = new_map} 1.0 in
-      {frames = ir_prog.frames @ [new_frame]}
-  | Agitate s ->
-      let container = ContainerMap.find s (ContainerMap.empty) in
-      let new_map = agitate_container container ContainerMap.empty in
-      let new_frame = create_frame (Agitate container) {containers = new_map} 0.5 in
-      {frames = ir_prog.frames @ [new_frame]}
-  | ChangeTemp (s, temp) ->
-        let container = ContainerMap.find s (ContainerMap.empty) in
-        let new_map = change_container_temp container temp ContainerMap.empty in
-        let new_frame = create_frame (ChangeTemp container) {containers = new_map} 1.0 in
-        {frames = ir_prog.frames @ [new_frame]}
-  | Mix (s1, s2, s3, _, _, v, _) ->
-        let container1 = ContainerMap.find s1 (ContainerMap.empty) in
-        let container2 = ContainerMap.find s2 (ContainerMap.empty) in
-        let volume = match v with
-          | Volume x -> x
-          | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
-          | NoVolume -> 10.0 in
-        let container3 = {
-            id = generate_container_id (ContainerMap.empty);
-            name = Some s3;
-            occupied_voume = volume;
-            required_volume = volume;
-            temperature = 25.0;
-            agitation = false
-          } in
-        let new_map = add_container_to_map container3.occupied_voume container3.required_volume ContainerMap.empty in
-        let new_map' = update_container_volume container1 (container1.occupied_voume +. volume) new_map in
-        let new_map'' = update_container_volume container2 (container2.occupied_voume +. volume) new_map' in
-        let new_frame = create_frame (Dispense (container1, container3)) {containers = new_map''} 2.0 in
-        {frames = ir_prog.frames @ [
-            new_frame;
-            create_frame (Dispense (container2, container3)) {containers = new_map''} 2.0
-            ]}
-  |  _ -> ir_prog
-
-
-let print ir_prog =
-  let json = generate_json_from_ir_program ir_prog in
-  print_endline json
+let current_map (ir_prog: ir_program) : container ContainerMap.t =
+  List.fold_left
+    (fun acc frame ->
+      ContainerMap.union (fun _key _a b -> Some b) acc frame.state.containers)
+    ContainerMap.empty
+    ir_prog.frames

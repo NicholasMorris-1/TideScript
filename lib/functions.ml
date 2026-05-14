@@ -5,11 +5,9 @@ open Periodictable
 
 (*Neccesary to fetch an amino acid from a one letter code input from a sequence*)
 
-
 let find_amino_acid_by_one_letter_code c = List.find (fun aa -> aa.one_letter_code = c)
 
 (*Same as above but for three letter code, this functionality isn't utilised yet*)
-
 
 let find_amino_acid_by_three_letter_code c amino_acid_list =
   let aa =find_amino_acid_by_one_letter_code c amino_acid_list in
@@ -30,6 +28,9 @@ let find_average_mass_by_one_letter_code c amino_acid_list =
 let find_monoisotopic_mass_by_one_letter_code  c amino_acid_list =
   let aa = find_amino_acid_by_one_letter_code c amino_acid_list in
     aa.monoisotopic_mass
+
+
+
 
 (*Fetch the smiles string of an amino acid from one letter code*)
 
@@ -72,8 +73,6 @@ let construct_sequence aa_sequence =
   String.fold_right (fun c acc ->
     let found_amino_acid = find_amino_acid_by_one_letter_code c natural_amino_acids in
     found_amino_acid :: acc) aa_sequence []
-
-
 
  (*Constructs a whole peptide type from a sequence, other properties are calculated from previously defined functions*)
   let construct_peptide aa_sequence =
@@ -210,7 +209,7 @@ let mix_solutions_protocol name sol1 sol2 eq1 eq2 (final_volume: volume_type) (m
   let final_vol =
   match final_volume with
   | NoVolume -> 0.0
-  | Volume final_volume -> final_volume 
+  | Volume final_volume -> final_volume
   | VolumeParam _ -> 0.0  (* This should not happen after substitution *) in
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
@@ -240,7 +239,7 @@ let mix_solutions_protocol_return_solution sol1 sol2 eq1 eq2 (final_volume: volu
   let final_vol =
   match final_volume with
   | NoVolume -> 0.0
-  | Volume final_volume -> final_volume 
+  | Volume final_volume -> final_volume
   | VolumeParam _ -> 0.0  (* This should not happen after substitution *) in
   let solution_1 : solution = find_solution_by_name sol1 map in
   let solution_2 : solution = find_solution_by_name sol2 map in
@@ -867,13 +866,13 @@ let rec substitute_var (old_var : string) (new_var : string) (expr : expression)
       let new_s3 = if s3 = old_var then new_var else s3 in
       let new_eq1 = if string_of_float eq1 = old_var then float_of_string new_var else eq1 in
       let new_eq2 = if string_of_float eq2 = old_var then float_of_string new_var  else  eq2 in
-      let new_vol = 
+      let new_vol =
         match vol with
         | NoVolume -> NoVolume
         | Volume v ->
-            if string_of_float v = old_var then 
-              Volume (float_of_string new_var) 
-            else 
+            if string_of_float v = old_var then
+              Volume (float_of_string new_var)
+            else
               Volume v
         | VolumeParam param_name ->
             if param_name = old_var then
