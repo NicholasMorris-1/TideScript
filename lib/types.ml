@@ -241,6 +241,21 @@ module RVKey =
 
 module RVMap = Map.Make(RVKey)
 
+module SolutionLineageKey =
+  struct
+    type t = string
+    let compare = compare
+  end
+
+module SolutionLineageMap = Map.Make(SolutionLineageKey)
+
+type solution_lineage = {
+  parent_1: string;
+  parent_2: string;
+  parent_1_required_volume: float option;
+  parent_2_required_volume: float option;
+}
+
 
 type env = {
 
@@ -251,4 +266,5 @@ type env = {
   protocols : protocol ProtocolMap.t;
   resins : resin ResinMap.t;
   rvs: rv RVMap.t;
+  solution_lineage: solution_lineage SolutionLineageMap.t;
   }

@@ -27,6 +27,7 @@ let init_env = {
   protocols = ProtocolMap.empty;
   resins = ResinMap.empty;
   rvs = RVMap.empty;
+  solution_lineage = SolutionLineageMap.empty;
 }
 
 
@@ -40,8 +41,68 @@ let shallow_copy_env (env : env) : env =
     protocols = env.protocols;
     resins = env.resins;
     rvs = env.rvs;
+    solution_lineage = env.solution_lineage;
 
   }
+
+let volume_type_to_float (v : volume_type) : float =
+  match v with
+  | Volume x -> x
+  | VolumeParam _ -> 10.0
+  | NoVolume -> 10.0
+
+let volume_to_ml (v : volume_type) (u : volume_unit) : float =
+  let volume = volume_type_to_float v in
+  match u with
+  | Liters -> volume *. 1000.0
+  | Milliliters -> volume
+  | VolumeUnitParam _ -> volume
+
+let required_parent_volumes eq1 eq2 final_volume_ml =
+  let total_eq = eq1 +. eq2 in
+  if total_eq <= 0.0 then
+    (None, None)
+  else
+    ( Some (final_volume_ml *. (eq1 /. total_eq)),
+      Some (final_volume_ml *. (eq2 /. total_eq)) )
+
+let make_mix_lineage parent_1 parent_2 eq1 eq2 v u =
+  let final_volume_ml = volume_to_ml v u in
+  let parent_1_required_volume, parent_2_required_volume =
+    required_parent_volumes eq1 eq2 final_volume_ml
+  in
+  {
+    parent_1;
+    parent_2;
+    parent_1_required_volume;
+    parent_2_required_volume;
+  }
+
+let rec find_returned_solution_name (expr : expression) : string option =
+  match expr with
+  | Sequence (_, e2) -> find_returned_solution_name e2
+  | Return s -> Some s
+  | _ -> None
+
+let rec find_mix_for_output (output_name : string) (expr : expression) :
+    (string * string * float * float * volume_type * volume_unit) option =
+  match expr with
+  | Sequence (e1, e2) ->
+    (match find_mix_for_output output_name e2 with
+    | Some mix -> Some mix
+    | None -> find_mix_for_output output_name e1)
+  | Mix (s1, s2, s3, eq1, eq2, v, u) when s1 = output_name ->
+    Some (s2, s3, eq1, eq2, v, u)
+  | _ -> None
+
+let extract_lineage_from_protocol_expr (expr : expression) : solution_lineage option =
+  match find_returned_solution_name expr with
+  | None -> None
+  | Some returned_solution_name ->
+    (match find_mix_for_output returned_solution_name expr with
+    | None -> None
+    | Some (parent_1, parent_2, eq1, eq2, v, u) ->
+      Some (make_mix_lineage parent_1 parent_2 eq1 eq2 v u))
 
 let rec eval_expr (e : expression) (env : env) : (env * solution option) =
       match e with
@@ -69,20 +130,16 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
       | Combine (s1, s2, s3) ->
                   ({env with solutions = combine_solutions s1 s2 s3 env.solutions}, None)
       | Mix (s1, s2, s3, eq1, eq2, v, u) ->
-                  let vol_float = match v with
-                        | Volume x -> x
-                        | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
-                        | NoVolume -> 10.0 in
+                  let vol_float = volume_type_to_float v in
                   let solution = mix_solutions_return_solution_with_unit s2 s3 eq1 eq2 vol_float env.solutions u in
-                  ({env with solutions = SolutionMap.add s1 solution env.solutions}, None)
+                  let new_solutions = SolutionMap.add s1 solution env.solutions in
+                  let new_lineage = SolutionLineageMap.add s1 (make_mix_lineage s2 s3 eq1 eq2 v u) env.solution_lineage in
+                  ({env with solutions = new_solutions; solution_lineage = new_lineage}, None)
 
       | Agitate (s) ->
         let env' = agitate_toggle_rv_or_solution s  env in (env', None)
       | AddTo (s1, v, u, s2) ->
-                  let vol_float = match v with
-                        | Volume x -> x
-                        | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
-                        | NoVolume -> 10.0 in
+                  let vol_float = volume_type_to_float v in
                   let env' = add_solution_to_rv_with_unit s2 s1 vol_float u env in
                   (env', None)
       | Drain(s) ->
@@ -128,12 +185,11 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
                   (match alpha_converted_expr with
                   | Mix (s1, s2, s3, eq1, eq2, v, u) ->
-                              let vol_float = match v with
-                                    | Volume x -> x
-                                    | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
-                                    | NoVolume -> 10.0 in
+                              let vol_float = volume_type_to_float v in
                               let solution_result = mix_solutions_return_solution_with_unit s2 s3 eq1 eq2 vol_float env.solutions u in
-                              ({env with solutions = SolutionMap.add s1 solution_result env.solutions}
+                              let new_solutions = SolutionMap.add s1 solution_result env.solutions in
+                              let new_lineage = SolutionLineageMap.add s1 (make_mix_lineage s2 s3 eq1 eq2 v u) env.solution_lineage in
+                              ({env with solutions = new_solutions; solution_lineage = new_lineage}
                                                    , None)
                   | _ ->
                               let _, _ = eval_expr alpha_converted_expr p_env in
@@ -146,11 +202,18 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
               raise (Failure ("Protocol " ^ s_2 ^ " does not have return Solution"))
             else
               let bound_p = bind_params_with_args_in_protocol p args in
+              let protocol_lineage = extract_lineage_from_protocol_expr bound_p.expressions in
               let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
               let _env'', sol_opt = eval_expr alpha_converted_expr env' in
               (match sol_opt with
               | Some solution ->
-                        ({env with solutions = SolutionMap.add s_1 solution env.solutions}, Some solution)
+                        let new_solutions = SolutionMap.add s_1 solution env.solutions in
+                        let new_lineage =
+                          match protocol_lineage with
+                          | None -> env.solution_lineage
+                          | Some lineage -> SolutionLineageMap.add s_1 lineage env.solution_lineage
+                        in
+                        ({env with solutions = new_solutions; solution_lineage = new_lineage}, Some solution)
               | None -> (env, None))
 
       | Print ->

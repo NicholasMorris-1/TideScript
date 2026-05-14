@@ -54,7 +54,7 @@ let env_to_hardware_graph (env : env) : ContainerGraph.t =
     ContainerGraph.add_vertex graph container;
     container
   in
-  let add_reservoir ~description ~agitate ~volume ~temperature =
+  let add_reservoir ~description ~agitate ~volume ~required_volume ~temperature =
     make_container
       ~id:(fresh_id ())
       ~description
@@ -64,7 +64,7 @@ let env_to_hardware_graph (env : env) : ContainerGraph.t =
       ~volume
       ~pump:true
       ~occupied_volume:volume
-      ~required_volume:volume
+      ~required_volume
     |> add_vertex
   in
   let waste =
@@ -105,17 +105,55 @@ let env_to_hardware_graph (env : env) : ContainerGraph.t =
       env.rvs
       []
   in
-  let reservoirs_from_solutions =
+  let add_required_volume name required_volume required_map =
+    let previous_required_volume =
+      match SolutionMap.find_opt name required_map with
+      | Some existing_volume -> existing_volume
+      | None -> 0.0
+    in
+    SolutionMap.add name (previous_required_volume +. required_volume) required_map
+  in
+  let solution_required_volumes =
+    SolutionLineageMap.fold
+      (fun _ lineage required_map ->
+        let required_map_with_parent_1 =
+          match lineage.parent_1_required_volume with
+          | Some required_volume ->
+            add_required_volume lineage.parent_1 required_volume required_map
+          | None -> required_map
+        in
+        match lineage.parent_2_required_volume with
+        | Some required_volume ->
+          add_required_volume lineage.parent_2 required_volume required_map_with_parent_1
+        | None -> required_map_with_parent_1)
+      env.solution_lineage
+      SolutionMap.empty
+  in
+  let solution_reservoirs =
     SolutionMap.fold
       (fun name (solution : solution) acc ->
-        add_reservoir
-          ~description:("Solution: " ^ name)
-          ~agitate:solution.agitate
-          ~volume:solution.volume
-          ~temperature:solution.temperature
-        :: acc)
+        let required_volume =
+          match SolutionMap.find_opt name solution_required_volumes with
+          | Some required_from_children ->
+            (match solution.volume with
+            | Some current_volume -> Some (max current_volume required_from_children)
+            | None -> Some required_from_children)
+          | None -> solution.volume
+        in
+        let reservoir =
+          add_reservoir
+            ~description:("Solution: " ^ name)
+            ~agitate:solution.agitate
+            ~volume:solution.volume
+            ~required_volume
+            ~temperature:solution.temperature
+        in
+        SolutionMap.add name reservoir acc)
       env.solutions
-      []
+      SolutionMap.empty
+  in
+  let reservoirs_from_solutions =
+    SolutionMap.fold (fun _ reservoir acc -> reservoir :: acc) solution_reservoirs []
   in
   let reservoirs_from_aa_solutions =
     AASolutionMap.fold
@@ -124,18 +162,20 @@ let env_to_hardware_graph (env : env) : ContainerGraph.t =
           ~description:("AA Solution: " ^ name)
           ~agitate:solution.agitate
           ~volume:solution.volume
+          ~required_volume:solution.volume
           ~temperature:solution.temperature
         :: acc)
       env.aa_solutions
       reservoirs_from_solutions
   in
-  let reservoirs_from_solvents =
+  let reservoirs =
     SolventMap.fold
       (fun name _ acc ->
         add_reservoir
           ~description:("Solvent: " ^ name)
           ~agitate:false
           ~volume:None
+          ~required_volume:None
           ~temperature:None
         :: acc)
       env.solvents
@@ -148,10 +188,11 @@ let env_to_hardware_graph (env : env) : ContainerGraph.t =
           ~description:("Resin: " ^ name)
           ~agitate:false
           ~volume:None
+          ~required_volume:None
           ~temperature:None
         :: acc)
       env.resins
-      reservoirs_from_solvents
+      reservoirs
   in
   List.iter
     (fun source ->
@@ -159,6 +200,30 @@ let env_to_hardware_graph (env : env) : ContainerGraph.t =
         (fun reactor -> ContainerGraph.add_edge graph source reactor)
         reactors)
     reservoirs;
+  SolutionLineageMap.iter
+    (fun mixed_solution_name lineage ->
+      let mixed_solution =
+        try Some (SolutionMap.find mixed_solution_name solution_reservoirs)
+        with Not_found -> None
+      in
+      let parent_1_container =
+        try Some (SolutionMap.find lineage.parent_1 solution_reservoirs)
+        with Not_found -> None
+      in
+      let parent_2_container =
+        try Some (SolutionMap.find lineage.parent_2 solution_reservoirs)
+        with Not_found -> None
+      in
+      match mixed_solution with
+      | None -> ()
+      | Some mixed_container ->
+        (match parent_1_container with
+         | Some parent_container -> ContainerGraph.add_edge graph parent_container mixed_container
+         | None -> ());
+        (match parent_2_container with
+         | Some parent_container -> ContainerGraph.add_edge graph parent_container mixed_container
+         | None -> ()))
+    env.solution_lineage;
   List.iter (fun reactor -> ContainerGraph.add_edge graph reactor waste) reactors;
   graph
 
@@ -179,6 +244,11 @@ module HardwareGraphDot = Graph.Graphviz.Dot (struct
   let get_subgraph (_ : vertex) : Graph.Graphviz.DotAttributes.subgraph option =
     None
 
+  let volume_to_label volume =
+    match volume with
+    | Some v -> Printf.sprintf "%.2f mL" v
+    | None -> "None"
+
   let vertex_attributes (v : vertex) : Graph.Graphviz.DotAttributes.vertex list =
     let color =
       match v.kind with
@@ -187,7 +257,17 @@ module HardwareGraphDot = Graph.Graphviz.Dot (struct
       | Mixer -> 0x90EE90
       | Waste -> 0xD3D3D3
     in
-    [`Shape `Box; `Style `Filled; `Fillcolor color; `Label v.description]
+    let label =
+      match v.kind with
+      | Resevoir | Reactor ->
+        Printf.sprintf
+          "%s\noccupied: %s\nrequired: %s"
+          v.description
+          (volume_to_label v.occupied_volume)
+          (volume_to_label v.required_volume)
+      | Mixer | Waste -> v.description
+    in
+    [`Shape `Box; `Style `Filled; `Fillcolor color; `Label label]
 
   let edge_attributes (_ : edge) : Graph.Graphviz.DotAttributes.edge list = []
 end)
