@@ -43,6 +43,7 @@ cat ../examples/<example>.tide | OCAMLRUNPARAM=b  dune exec tidescript
 ``` 
 replacing \<example\> with your desired script.
 
+When the program runs, it emits `hardware_graph.dot` and `hardware_graph.png` in the current working directory (for the command above, that is `data/`).
 
 
 

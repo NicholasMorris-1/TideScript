@@ -1,0 +1,35 @@
+digraph G {
+  node_3 [label="Solution: edt_sol", fillcolor="#ADD8E6", shape=box,
+          style="filled", ];
+  node_1 [label="Waste", fillcolor="#D3D3D3", shape=box, style="filled", ];
+  node_9 [label="Solvent: ether", fillcolor="#ADD8E6", shape=box,
+          style="filled", ];
+  node_2 [label="RV: rv_a", fillcolor="#F08080", shape=box, style="filled", ];
+  node_11 [label="Resin: resin_a", fillcolor="#ADD8E6", shape=box,
+           style="filled", ];
+  node_6 [label="Solution: water_sol", fillcolor="#ADD8E6", shape=box,
+          style="filled", ];
+  node_10 [label="Solvent: methanol", fillcolor="#ADD8E6", shape=box,
+           style="filled", ];
+  node_4 [label="Solution: tfa_sol", fillcolor="#ADD8E6", shape=box,
+          style="filled", ];
+  node_5 [label="Solution: tips_sol", fillcolor="#ADD8E6", shape=box,
+          style="filled", ];
+  node_8 [label="Solvent: dmf", fillcolor="#ADD8E6", shape=box,
+          style="filled", ];
+  node_7 [label="Solvent: dcm", fillcolor="#ADD8E6", shape=box,
+          style="filled", ];
+  
+  
+  node_3 -> node_2;
+  node_9 -> node_2;
+  node_2 -> node_1;
+  node_11 -> node_2;
+  node_6 -> node_2;
+  node_10 -> node_2;
+  node_4 -> node_2;
+  node_5 -> node_2;
+  node_8 -> node_2;
+  node_7 -> node_2;
+  
+  }
