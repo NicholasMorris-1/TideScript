@@ -1,21 +1,16 @@
 { pkgs ? import <nixpkgs> {} }:
 
-with pkgs;
-
-mkShell {
-  buildInputs = [
-    ocaml
-    opam
-    ocamlPackages.menhir
-    ocamlPackages.dune_3
-    ocamlPackages.utop
-    ocamlPackages.merlin
-    emacsPackages.tuareg
-    ocamlPackages.ocp-indent
-    ocamlPackages.ocamlformat_0_26_0
-    ocamlPackages.ounit2
-
-
-
+pkgs.mkShell {
+  packages = [
+    pkgs.ocaml
+    pkgs.opam
+    pkgs.ocamlPackages.menhir
+    pkgs.ocamlPackages.dune_3
+    pkgs.ocamlPackages.utop
+    pkgs.ocamlPackages.merlin
+    pkgs.emacsPackages.tuareg
+    pkgs.ocamlPackages.ocp-indent
+    pkgs.ocamlPackages.ounit2
+    pkgs.ocamlPackages.ocamlgraph
   ];
 }
