@@ -26,7 +26,29 @@ eval $(opam env)
 ``` 
 You can replace \<TideScript\> with whatever description you would like, and 4.14.2 with a different compiler version if you so chose.
 ### Nix users 
-There is a nix shell in the root directory you can use. 
+The root directory provides a Nix shell containing TideScript, BigraphER, and
+their native build dependencies. Enter it from the repository root with:
+
+``` shell
+nix-shell
+```
+
+This makes both commands available:
+
+``` shell
+tidescript --help
+bigrapher --help
+```
+
+To build either package independently, run:
+
+``` shell
+nix-build -A tideScript
+nix-build -A bigrapher
+```
+
+The resulting packages are placed in the Nix store, with a `result` symlink
+created in the repository for each `nix-build` command.
 
 ## Running Scripts
 
@@ -42,8 +64,6 @@ dune build
 cat ../examples/<example>.tide | OCAMLRUNPARAM=b  dune exec tidescript
 ``` 
 replacing \<example\> with your desired script.
-
-
 
 
 
