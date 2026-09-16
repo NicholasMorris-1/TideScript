@@ -12,7 +12,8 @@ mkShell {
     ocamlPackages.merlin
     emacsPackages.tuareg
     ocamlPackages.ocp-indent
-    ocamlPackages.ocamlformat_0_26_0
+    ocamlPackages.ocamlgraph
+   # ocamlPackages.ocamlformat_0_26_0
     ocamlPackages.ounit2
 
 
