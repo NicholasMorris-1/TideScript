@@ -50,3 +50,5 @@ lexer.ml
 
 #Opam
 *.opam
+
+*.pdf
