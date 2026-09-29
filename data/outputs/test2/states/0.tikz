@@ -1,0 +1,75 @@
+
+
+\documentclass[crop,tikz]{standalone}
+\usetikzlibrary{fit, positioning, calc, shapes, shapes.geometric, arrows, arrows.meta}
+\tikzset{
+  big edge/.style={green, thick,},
+  big edgec/.style={big edge, -{Bar[fill=green,green,width=4,length=0,sep=0]}},
+  big region/.style={draw, rectangle, rounded corners=1.5, dashed, dash pattern=on 1pt off 1pt, thin, gray,},
+  big site/.style={big region, fill=gray!60, text=black,},
+  big react/.style={black, thick, -stealth, line width=3, shorten <=3, shorten >=3,},
+  big react rev/.style={black, thick, stealth-stealth, line width=3, shorten <=3, shorten >=3,},
+  big inst map/.style={thick, -stealth, blue, dashed},
+  lbl/.style={font=\tiny\sf, inner sep=1,},
+  lbl conc/.style={font=\tiny, inner sep=1,}
+}
+\usepackage{amsmath,amssymb}
+\DeclareMathOperator{\react}{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\vartriangleright}}
+\newcommand{\reactp}[1]{\operatorname{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #1 \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\vartriangleright}}}
+\DeclareMathOperator{\rrul}{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\blacktriangleright}}
+\newcommand{\rrulp}[1]{\operatorname{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #1 \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\blacktriangleright}}}
+\newcommand{\rrula}[2]{\operatorname{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #1 \hspace*{1mm}}\end{scriptsize}}}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #2 \hspace*{1mm}}\end{scriptsize}}}\joinrel{\!\!\blacktriangleright}}}
+
+\begin{document}
+
+\begin{tikzpicture}[
+  ,
+_BIG_system/.append style = {draw, rounded corners=0.8},
+_BIG_solution_lys_sol/.append style = {draw, rounded corners=0.8},
+_BIG_solution_hbtu_sol/.append style = {draw, rounded corners=0.8},
+_BIG_solution_dipea_sol/.append style = {draw, rounded corners=0.8},
+_BIG_solution_deblock/.append style = {draw, rounded corners=0.8},
+_BIG_rV_rv_a/.append style = {draw, rounded corners=0.8},
+_BIG_fluid_lys_sol/.append style = {draw, rounded corners=0.8},
+_BIG_fluid_hbtu_sol/.append style = {draw, rounded corners=0.8},
+_BIG_fluid_dipea_sol/.append style = {draw, rounded corners=0.8},
+_BIG_fluid_deblock/.append style = {draw, rounded corners=0.8}
+  ]
+    
+\node[_BIG_rV_rv_a,  label={[inner sep=0.5, name=n1l]north:{\sf\tiny RV\_rv\_a}}] (n1) {};
+\node[_BIG_fluid_lys_sol, right=1.00 of n1, label={[inner sep=0.5, name=n3l]north:{\sf\tiny Fluid\_lys\_sol}}] (n3) {};
+\node[_BIG_fluid_deblock, right=1.00 of n3, label={[inner sep=0.5, name=n5l]north:{\sf\tiny Fluid\_deblock}}] (n5) {};
+\node[_BIG_fluid_hbtu_sol, right=1.00 of n5, label={[inner sep=0.5, name=n7l]north:{\sf\tiny Fluid\_hbtu\_sol}}] (n7) {};
+\node[_BIG_fluid_dipea_sol, right=1.00 of n7, label={[inner sep=0.5, name=n9l]north:{\sf\tiny Fluid\_dipea\_sol}}] (n9) {};
+\node[_BIG_solution_dipea_sol, fit=(n9)(n9l), label={[inner sep=0.5, name=n8l]north:{\sf\tiny Solution\_dipea\_sol}}] (n8) {};
+\node[_BIG_solution_hbtu_sol, fit=(n7)(n7l), label={[inner sep=0.5, name=n6l]north:{\sf\tiny Solution\_hbtu\_sol}}] (n6) {};
+\node[_BIG_solution_deblock, fit=(n5)(n5l), label={[inner sep=0.5, name=n4l]north:{\sf\tiny Solution\_deblock}}] (n4) {};
+\node[_BIG_solution_lys_sol, fit=(n3)(n3l), label={[inner sep=0.5, name=n2l]north:{\sf\tiny Solution\_lys\_sol}}] (n2) {};
+\node[_BIG_system, fit=(n8)(n8l)(n6)(n6l)(n4)(n4l)(n2)(n2l)(n1)(n1l), label={[inner sep=0.5, name=n0l]north:{\sf\tiny System}}] (n0) {};
+\node[big region, fit=(n0)(n0l)] (r0) {};
+\node[] at ($(r0.north west) + (0,0.3)$) (name_link_deblock) {\tiny $link_deblock$};
+\node[right=1 of name_link_deblock] (name_link_dipea_sol) {\tiny $link_dipea_sol$};
+\node[right=1 of name_link_dipea_sol] (name_link_hbtu_sol) {\tiny $link_hbtu_sol$};
+\node[right=1 of name_link_hbtu_sol] (name_link_lys_sol) {\tiny $link_lys_sol$};
+\node[right=1 of name_link_lys_sol] (name_link_rv_a) {\tiny $link_rv_a$};
+\coordinate (h0) at ($(n5) + (0.3,0.3)$);
+\draw[big edge] (n5) to[out=0,in=-90] (h0);
+\draw[big edge] (n4) to[out=0,in=-90] (h0);
+\draw[big edge] (name_link_deblock) to[out=-90,in=90] (h0);
+\coordinate (h1) at ($(n9) + (0.3,0.3)$);
+\draw[big edge] (n9) to[out=0,in=-90] (h1);
+\draw[big edge] (n8) to[out=0,in=-90] (h1);
+\draw[big edge] (name_link_dipea_sol) to[out=-90,in=90] (h1);
+\coordinate (h2) at ($(n7) + (0.3,0.3)$);
+\draw[big edge] (n7) to[out=0,in=-90] (h2);
+\draw[big edge] (n6) to[out=0,in=-90] (h2);
+\draw[big edge] (name_link_hbtu_sol) to[out=-90,in=90] (h2);
+\coordinate (h3) at ($(n3) + (0.3,0.3)$);
+\draw[big edge] (n3) to[out=0,in=-90] (h3);
+\draw[big edge] (n2) to[out=0,in=-90] (h3);
+\draw[big edge] (name_link_lys_sol) to[out=-90,in=90] (h3);
+\draw[big edge] (n1) to[out=0,in=-90] (name_link_rv_a);
+
+\end{tikzpicture}
+  
+\end{document}

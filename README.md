@@ -65,5 +65,28 @@ cat ../examples/<example>.tide | OCAMLRUNPARAM=b  dune exec tidescript
 ``` 
 replacing \<example\> with your desired script.
 
+To emit a BigraphER bigraph reactive system while evaluating a script, pass an
+output path with `--brs`:
 
+```
+cat ../examples/<example>.tide | dune exec tidescript -- --brs /tmp/model.big
+vendor/bigraph-tools/_build/install/default/bin/bigrapher validate /tmp/model.big
+```
 
+The generated model contains the declared TideScript entities as controls,
+solutions and vessels with fluid links, and reaction rules that rewrite those
+links and fluid nodes. Protocol calls are expanded into the corresponding
+rules; protocol declarations do not execute while the model is built. Set
+`BIGRAPHER` when using an installed BigraphER executable from another location.
+
+To run an example and generate the BRS, TikZ state diagrams, and PDFs:
+
+``` shell
+./run_example.sh test1
+```
+
+The optional second argument selects the output directory:
+
+``` shell
+./run_example.sh test2 /tmp/tidescript-test2
+```

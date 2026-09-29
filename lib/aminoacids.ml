@@ -21,7 +21,10 @@ let parse_line line =
 
 (*function to read in CSV*)
 let read_csv filename =
-  let channel = open_in filename in
+  let path =
+    if Sys.file_exists filename then filename else Filename.concat "data" filename
+  in
+  let channel = open_in path in
   let rec read_lines acc =
     try
       let line = input_line channel in

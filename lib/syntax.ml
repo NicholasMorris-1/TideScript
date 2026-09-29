@@ -98,9 +98,7 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   ({env with solutions = change_temp_solution s t env.solutions}, None)
       | Deagitate (s) ->
                   ({env with solutions = de_agitate_solution s env.solutions}, None)
-      | Wait(x) ->
-                  let () = Unix.sleep 2 in
-                  let () = Printf.printf "Waiting for %d hours\n" x in
+      | Wait _ ->
                   (env, None)
       | Protocol (s, r, a, e) ->
                   ({env with protocols = add_protocol (create_protocol s r a e) env.protocols}, None)
@@ -109,8 +107,8 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   let p = retrieve_protocol s env.protocols in
                   (match p.returntype with
                   | VoidType ->
-                              let _, _ = eval_expr p.expressions env' in
-                              (env, None)
+                              let env'', _ = eval_expr p.expressions env' in
+                              (env'', None)
                   | SolutionType ->
                               raise (Failure ("Protocol " ^ s ^ " has return type Solution, but return value not handled")))
       | Call_2 (s, args) ->
@@ -119,25 +117,14 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
                   let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
                   eval_expr alpha_converted_expr env
       | Call_void (s, args) ->
-                  let p_env = init_env in
                   let p = retrieve_protocol s env.protocols in
                   (if p.returntype <> VoidType then
                         raise (Failure ("Protocol " ^ s ^ " does not have return type Void"))
                   else ());
                   let bound_p = bind_params_with_args_in_protocol p args in
                   let alpha_converted_expr = alpha_convert (free_vars bound_p.expressions) bound_p.expressions in
-                  (match alpha_converted_expr with
-                  | Mix (s1, s2, s3, eq1, eq2, v, u) ->
-                              let vol_float = match v with
-                                    | Volume x -> x
-                                    | VolumeParam _ -> 10.0  (* This should not happen after substitution *)
-                                    | NoVolume -> 10.0 in
-                              let solution_result = mix_solutions_return_solution_with_unit s2 s3 eq1 eq2 vol_float env.solutions u in
-                              ({env with solutions = SolutionMap.add s1 solution_result env.solutions}
-                                                   , None)
-                  | _ ->
-                              let _, _ = eval_expr alpha_converted_expr p_env in
-                              (env, None))
+                  let env', _ = eval_expr alpha_converted_expr env in
+                  (env', None)
 
       | Call_solution_2 (s_1, s_2, args) ->
             let env' = shallow_copy_env env in
@@ -154,7 +141,6 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
               | None -> (env, None))
 
       | Print ->
-                  let () = Unix.sleep 2 in
                   let () = print_env env None in
                   (env, None)
       | _ -> env, None
@@ -168,3 +154,5 @@ let rec eval_expr (e : expression) (env : env) : (env * solution option) =
      let vol_float =  v in
      {env with solutions = mix_solutions_protocol s1 s2 s3 eq1 eq2 vol_float env.solutions p_env.solutions}
   | _ -> eval_expr e env*)
+
+let evaluate = eval_expr

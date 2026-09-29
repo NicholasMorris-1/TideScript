@@ -1,0 +1,53 @@
+
+
+\documentclass[crop,tikz]{standalone}
+\usetikzlibrary{fit, positioning, calc, shapes, shapes.geometric, arrows, arrows.meta}
+\tikzset{
+  big edge/.style={green, thick,},
+  big edgec/.style={big edge, -{Bar[fill=green,green,width=4,length=0,sep=0]}},
+  big region/.style={draw, rectangle, rounded corners=1.5, dashed, dash pattern=on 1pt off 1pt, thin, gray,},
+  big site/.style={big region, fill=gray!60, text=black,},
+  big react/.style={black, thick, -stealth, line width=3, shorten <=3, shorten >=3,},
+  big react rev/.style={black, thick, stealth-stealth, line width=3, shorten <=3, shorten >=3,},
+  big inst map/.style={thick, -stealth, blue, dashed},
+  lbl/.style={font=\tiny\sf, inner sep=1,},
+  lbl conc/.style={font=\tiny, inner sep=1,}
+}
+\usepackage{amsmath,amssymb}
+\DeclareMathOperator{\react}{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\vartriangleright}}
+\newcommand{\reactp}[1]{\operatorname{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #1 \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\vartriangleright}}}
+\DeclareMathOperator{\rrul}{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\blacktriangleright}}
+\newcommand{\rrulp}[1]{\operatorname{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #1 \hspace*{1mm}}\end{scriptsize}}}{}} \joinrel{\!\!\blacktriangleright}}}
+\newcommand{\rrula}[2]{\operatorname{\mathrel{\frac{\raisebox{0.75mm}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #1 \hspace*{1mm}}\end{scriptsize}}}{\begin{scriptsize}\ensuremath{\hspace*{1mm}\ #2 \hspace*{1mm}}\end{scriptsize}}}\joinrel{\!\!\blacktriangleright}}}
+
+\begin{document}
+
+\begin{tikzpicture}[
+  ,
+_BIG_system/.append style = {draw, rounded corners=0.8},
+_BIG_solution_sol_y/.append style = {draw, rounded corners=0.8},
+_BIG_solution_sol_x/.append style = {draw, rounded corners=0.8},
+_BIG_fluid_sol_y/.append style = {draw, rounded corners=0.8},
+_BIG_fluid_sol_x/.append style = {draw, rounded corners=0.8}
+  ]
+    
+\node[_BIG_fluid_sol_x,  label={[inner sep=0.5, name=n2l]north:{\sf\tiny Fluid\_sol\_x}}] (n2) {};
+\node[_BIG_fluid_sol_y, right=1.00 of n2, label={[inner sep=0.5, name=n4l]north:{\sf\tiny Fluid\_sol\_y}}] (n4) {};
+\node[_BIG_solution_sol_y, fit=(n4)(n4l), label={[inner sep=0.5, name=n3l]north:{\sf\tiny Solution\_sol\_y}}] (n3) {};
+\node[_BIG_solution_sol_x, fit=(n2)(n2l), label={[inner sep=0.5, name=n1l]north:{\sf\tiny Solution\_sol\_x}}] (n1) {};
+\node[_BIG_system, fit=(n3)(n3l)(n1)(n1l), label={[inner sep=0.5, name=n0l]north:{\sf\tiny System}}] (n0) {};
+\node[big region, fit=(n0)(n0l)] (r0) {};
+\node[] at ($(r0.north west) + (0,0.3)$) (name_link_sol_x) {\tiny $link_sol_x$};
+\node[right=1 of name_link_sol_x] (name_link_sol_y) {\tiny $link_sol_y$};
+\coordinate (h0) at ($(n2) + (0.3,0.3)$);
+\draw[big edge] (n2) to[out=0,in=-90] (h0);
+\draw[big edge] (n1) to[out=0,in=-90] (h0);
+\draw[big edge] (name_link_sol_x) to[out=-90,in=90] (h0);
+\coordinate (h1) at ($(n4) + (0.3,0.3)$);
+\draw[big edge] (n4) to[out=0,in=-90] (h1);
+\draw[big edge] (n3) to[out=0,in=-90] (h1);
+\draw[big edge] (name_link_sol_y) to[out=-90,in=90] (h1);
+
+\end{tikzpicture}
+  
+\end{document}
