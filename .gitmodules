@@ -1,0 +1,6 @@
+[submodule "vendor/--force"]
+	path = vendor/--force
+	url = https://bitbucket.org/uog-bigraph/bigraph-tools.git
+[submodule "vendor/bigraph-tools"]
+	path = vendor/bigraph-tools
+	url = https://bitbucket.org/uog-bigraph/bigraph-tools.git
