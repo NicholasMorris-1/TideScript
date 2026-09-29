@@ -26,4 +26,4 @@ let read_csv filename =
       read_lines []
 
 (*create a list of amino_acids that comprise of the 20 naturally ocurring ones*)
-let solvent_list = read_csv "solvents.csv"
+let solvent_list = read_csv "data/solvents.csv"

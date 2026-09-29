@@ -32,5 +32,7 @@ let read_csv filename =
     in
       read_lines []
 
+
+
 (*create a list of amino_acids that comprise of the 20 naturally ocurring ones*)
-let natural_amino_acids = read_csv "aa.csv"
+let natural_amino_acids = read_csv "data/aa.csv"

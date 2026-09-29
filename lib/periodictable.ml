@@ -77,4 +77,4 @@ let read_csv filename =
       in
         read_lines []
 
-let periodic_table = read_csv "periodic_table.csv"
+let periodic_table = read_csv "data/periodic_table.csv"
