@@ -2,3 +2,8 @@
  (public_name tidescript)
  (name main)
  (libraries tidescript))
+
+(executable
+ (public_name test_bigraphs)
+ (name test_bigraphs)
+ (libraries tidescript))
