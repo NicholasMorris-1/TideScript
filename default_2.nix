@@ -22,6 +22,14 @@ let
     patches = [ ];
   });
 
+  gmake = pkgs.gnumake.overrideAttrs (old: rec {
+    version = "3.75";
+    src = pkgs.fetchurl {
+      url = "https://ftp.gnu.org/gnu/make/make-${version}.tar.gz";
+      hash = "sha256-K8h2MEkFrueKvw9xY7pVou/OyAMDT3XHXRuUZQw2q6c=";
+    };
+  });
+
   tidescript_builder = pkgs.ocamlPackages.buildDunePackage rec {
     pname = "tideScript";
     version = "1.0.0";
@@ -45,10 +53,12 @@ let
       pkgs.ocamlPackages.ounit2
       pkgs.ocamlPackages.utop
       pkgs.ocamlPackages.odoc
+      pkgs.ocamlPackages.menhirLib
     ];
 
     nativeBuildInputs = [
       pkgs.cmake
+      pkgs.gnumake
       pkgs.graphviz
       pkgs.obelisk
       pkgs.ocamlPackages.mdx
