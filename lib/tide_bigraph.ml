@@ -5,6 +5,9 @@ module Face = Bigraph__Face
 module Solver = Bigraph__Solver
 module Brs = Bigraph__Brs
 module Fun = Bigraph__Fun
+module Ts = Bigraph__Ts
+
+
 
 
 
@@ -70,3 +73,17 @@ let rdx =
 let validity_result = R.is_valid_react rule
 
 let (stepped, total) = R.step s0 [ rule ]
+
+let r2 = R.apply s0 [ rule ]
+
+let r3 = R.fix s0 [ rule ]
+
+let pc = R.P_class [ rule ]
+
+let (ts, stats) =
+  try R.bfs ~s0:s0 ~priorities:[pc] ~predicates:[]
+        ~max:50 (fun _ _ -> ())
+  with R.MAX (g, s) -> (g,s)
+
+
+
