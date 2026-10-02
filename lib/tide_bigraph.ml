@@ -7,6 +7,9 @@ module Brs = Bigraph__Brs
 module Fun = Bigraph__Fun
 module Ts = Bigraph__Ts
 module Tikz = Bigraph__Tikz
+module Pbrs = Bigraph__Pbrs
+module Sbrs = Bigraph__Sbrs
+module TS = Bigraph__Ts
 
 
 
@@ -86,6 +89,19 @@ let (ts, stats) =
         ~max:50 (fun _ _ -> ())
   with R.MAX (g, s) -> (g,s)
 
+module WP = Pbrs.Make (S)
+let wr =
+    WP.parse_react_unsafe ~name:"tick" ~lhs:rdx ~rhs:rct
+      7.0
+      (Some (Fun.of_list [ (0, 0) ]))
+
+module WS = Sbrs.Make (S)
+let sr =
+    WS.parse_react_unsafe ~name:"decay" ~lhs:rdx ~rhs:rct
+      1.0
+      (Some (Fun.of_list [ (0, 0) ]))
+
+
 let output_to_dot bigraph filename =
   let oc = open_out filename in
   Big.to_dot bigraph  "b" |> output_string oc;
@@ -108,3 +124,5 @@ let save_tikz_to_dir bigraph dir filename =
   let oc = open_out path in
   Tikz.big_to_tikz bigraph |> output_string oc;
   close_out oc
+
+
