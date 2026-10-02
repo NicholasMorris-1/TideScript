@@ -6,6 +6,7 @@ module Solver = Bigraph__Solver
 module Brs = Bigraph__Brs
 module Fun = Bigraph__Fun
 module Ts = Bigraph__Ts
+module Tikz = Bigraph__Tikz
 
 
 
@@ -85,5 +86,25 @@ let (ts, stats) =
         ~max:50 (fun _ _ -> ())
   with R.MAX (g, s) -> (g,s)
 
+let output_to_dot bigraph filename =
+  let oc = open_out filename in
+  Big.to_dot bigraph  "b" |> output_string oc;
+  close_out oc
+
+let save_dot_to_dir bigraph dir filename =
+  let path = Filename.concat dir filename in
+  let oc = open_out path in
+  Big.to_dot bigraph "b" |> output_string oc;
+  close_out oc
 
 
+let output_to_tikz bigraph filename =
+  let oc = open_out filename in
+  Tikz.big_to_tikz bigraph  |> output_string oc;
+  close_out oc
+
+let save_tikz_to_dir bigraph dir filename =
+  let path = Filename.concat dir filename in
+  let oc = open_out path in
+  Tikz.big_to_tikz bigraph |> output_string oc;
+  close_out oc

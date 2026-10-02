@@ -1,0 +1,23 @@
+digraph "b" {
+newrank = true;
+stylesheet = "style.css";
+r0 [ label="0", style="dashed", shape=box, width=.28, height=.18, fontname="serif", fontsize=9.0 ];
+"och" [ shape=plaintext, label="ch", width=.18, height=.18, fontname="serif", fontsize=9.0 ];
+{ rank=source; r0; "och" };
+e0 [ shape=none, label="", width=0, height=0, margin=0, color=green ];
+v0 [ label="Server", shape=ellipse, id="v0_Server" fontname="sans-serif", fontsize=9.0,fixedsize=true, width=0.800000, height=.30 ];
+v1 [ label="Client", shape=ellipse, id="v1_Client" fontname="sans-serif", fontsize=9.0,fixedsize=true, width=0.800000, height=.30 ];
+v2 [ label="Client", shape=ellipse, id="v2_Client" fontname="sans-serif", fontsize=9.0,fixedsize=true, width=0.800000, height=.30 ];
+v3 [ label="Idle", shape=ellipse, id="v3_Idle" fontname="sans-serif", fontsize=9.0,fixedsize=true, width=0.600000, height=.30 ];
+{ rank=same; v0 };
+{ rank=same; v3; v2; v1 };
+r0 -> v0 [ arrowhead="vee", arrowsize=0.5 ];
+v0 -> v1 [ arrowhead="vee", arrowsize=0.5 ];
+v0 -> v2 [ arrowhead="vee", arrowsize=0.5 ];
+v0 -> v3 [ arrowhead="vee", arrowsize=0.5 ];
+edge [ color=green, arrowhead=none, arrowtail=none, arrowsize=0.3 ];
+e0 -> v2 [dir=both, tailclip=false, tooltip="e0: {v0,v1,v2}" ];
+e0 -> v1 [dir=both, tailclip=false, tooltip="e0: {v0,v1,v2}" ];
+e0 -> v0 [dir=both, tailclip=false, tooltip="e0: {v0,v1,v2}" ];
+"och" -> e0 [ headclip=false ];
+}
